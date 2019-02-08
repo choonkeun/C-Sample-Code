@@ -1,0 +1,33 @@
+
+
+https://www.dotnetperls.com/#c#+regex
+
+https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference
+
+---
+Regex.Replace("(949) 111-1111", @"[^0-9]+", "");  --> 9491111111
+---
+string sentence = "10 cats, 20 dogs, 40 fish and 1 programmer.";
+string[] digits = Regex.Split(sentence, @"\D+");
+10
+20
+40
+1
+---
+string source = "  Some text ";
+source = Regex.Replace(source, @"^\s+", "");
+source = Regex.Replace(source, @"\s+$", "");        //This requires that we match at the end.
+source = Regex.Replace(source, @"^\s+|\s+$", "");
+
+isAlphaNumeric: Regex.IsMatch(path, @"^[a-zA-Z0-9]*$");
+RemoveDigits:   Regex.Replace(key, @"\d", "");
+                "([a-zA-Z0-9\-]+?)    : group of alphanumeric characters
+---
+Regex a1 = new Regex(@"^\s+", RegexOptions.Compiled);
+Regex a2 = new Regex(@"\s+$", RegexOptions.Compiled);
+string source = "  Some text ";
+source = a1.Replace(source, "");
+source = a2.Replace(source, "");
+---
+string s1 = "This string has something at the end<br/>";
+string s2 = System.Text.RegularExpressions.Regex.Replace(s1, "<br/>$", "");  // Use regular expression to trim the ending string.

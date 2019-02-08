@@ -1,0 +1,45 @@
+
+	Timezone Convert
+	----------------
+	
+	string utcDateTimeString = "2017-05-22T15:10:00.000Z";
+	string utcDateTimeString = nodeDateTimeSpecimenCollection.InnerText;
+	
+	//sample 1
+	DateTime utcDateTime = DateTime.Parse(utcDateTimeString, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+	TimeZoneInfo easternTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+	DateTime easternDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, easternTimeZone);
+	R.dateTimeSpecimenCollection = easternDateTime;
+
+	//sample 2
+	//TimeZoneInfo gmtZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+	TimeZoneInfo utcZone = TimeZoneInfo.FindSystemTimeZoneById("UTC");
+	utcDateTime = DateTime.Parse(utcDateTimeString, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+	DateTime gmtDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, utcZone);
+	R.dateTimeSpecimenReceivedAtLab = nodeDateTimeSpecimenReceivedAtLab.HasChildNodes == true ? gmtDateTime : System.Data.SqlTypes.SqlDateTime.MinValue.Value;
+
+	//sample 1
+	utcDateTime = DateTime.Parse(utcDateTimeString, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+	gmtDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, utcZone);
+	R.dateTimeSpecimenReportedFromLab = nodeDateTimeSpecimenReportedFromLab.HasChildNodes == true ? gmtDateTime : System.Data.SqlTypes.SqlDateTime.MinValue.Value;
+
+---
+DateTime inputTime = new DateTime(2007, 02, 01, 08, 00, 00);
+try
+{
+   TimeZoneInfo timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Hawaiian Standard Time");
+   Console.WriteLine("{0} {1} is {2} local time.", 
+           inputTime, 
+           timeZoneInfo.IsDaylightSavingTime(inputTime) ? timeZoneInfo.DaylightName : timeZoneInfo.StandardName, 
+           TimeZoneInfo.ConvertTime(inputTime, timeZoneInfo, TimeZoneInfo.Local));
+}
+catch (TimeZoneNotFoundException)
+{
+   Console.WriteLine("The registry does not define the Hawaiian Standard Time zone.");
+}                           
+catch (InvalidTimeZoneException)
+{
+   Console.WriteLine("Registry data on the Hawaiian Standard Time zone has been corrupted.");
+}
+
+

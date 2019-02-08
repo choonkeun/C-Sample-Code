@@ -1,0 +1,77 @@
+
+    private string getTextURL(string url)
+    {
+        string content = "";
+        try
+        {
+            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url);
+            //request.CookieContainer = cookieJar;
+            //request.Accept = "*/*";
+            //request.AllowAutoRedirect = true;
+            //request.UserAgent = "http_requester/0.1";
+            //request.Timeout= 60000;
+            request.Method = WebRequestMethods.Http.Get;
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                //StreamReader is only good for reading text
+                using (StreamReader sr = new StreamReader(response.GetResponseStream()))
+                {
+                    content = sr.ReadToEnd();
+                }
+            }
+            response.Close();
+        }
+        catch (WebException e)
+        {
+            string errCode = ((int)((System.Net.HttpWebResponse)(e.Response)).StatusCode).ToString();
+            string errMsg = ((System.Net.HttpWebResponse)(e.Response)).StatusCode.ToString();
+            content = errCode + " " + errMsg;
+        }
+        return content;
+    }
+
+    private string postTextURL(string url, string postText)
+    {
+        string content = "";
+
+        try
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = WebRequestMethods.Http.Post;
+            request.ContentType = "application/x-www-form-urlencoded";
+
+            //Way 1: Stream - FileStream or MemoryStream or Binary file
+            System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
+            byte[] postByte = encoding.GetBytes(postText);
+            request.ContentLength = postByte.Length;
+            System.IO.Stream postStream = request.GetRequestStream();
+            postStream.Write(postByte, 0, postByte.Length);
+            postStream.Close();
+
+            //Way 2: StreamWriter - Writes text data and files
+            request.ContentLength = postText.Length;
+            using (StreamWriter writer = new StreamWriter(request.GetRequestStream()))
+            {
+                writer.Write(postText);     //send data
+            }
+
+            System.Net.HttpWebResponse response = (System.Net.HttpWebResponse)request.GetResponse();
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+                {
+                    content = reader.ReadToEnd();
+                }
+            }
+            response.Close();
+        }
+        catch (WebException e)
+        {
+            string errCode = ((int)((System.Net.HttpWebResponse)(e.Response)).StatusCode).ToString();
+            string errMsg = ((System.Net.HttpWebResponse)(e.Response)).StatusCode.ToString();
+            content = errCode + " " + errMsg;
+        }
+        return content;
+    }
+

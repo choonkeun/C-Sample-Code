@@ -1,0 +1,141 @@
+
+스플래쉬창 = Splash Window = 로딩창, 작업중창, 프로그래스창
+
+메인 쓰레드(UI 쓰레드)에서 긴 작업을 할때 화면이 멈출텐데, 스플래쉬창(작업중, 로딩창)을 쓰려고 해도
+화면에 나타나지 않거나 프로그래스가 업데이트 되지 않죠
+스플래쉬창을 별도 쓰레드에서 동작시켜 스플래쉬창은 계속 움직이거나 업데이트가 가능한 코드입니다.
+범용적으로 쓸수 있게 제너릭과 메서드 샐랙터를 써서 코드가 조금 생소한분이 있을수도 있습니다.
+
+//주코드
+
+/*
+* 쓰레드를 사용하는 스플래쉬 폼
+* 최초 작성 2017-09-01 @ 밍키
+*/
+
+public class ThreadedSplashFormController   where T : Form, new() where P : EventArgs
+{
+    EventHandler
+
+    p = null;
+    private System.Threading.Thread t = null;
+    T splashForm = null;
+
+    private ThreadedSplashFormController()
+    {
+        splashForm = new T();
+    }
+    public ThreadedSplashFormController(Func> e)
+    {
+        splashForm = new T();
+        p = e.Invoke(splashForm);
+    }
+
+    public void Show()
+    {
+        t = new System.Threading.Thread(_Show);
+        t.Start();
+        while(true)
+        {
+            System.Threading.Thread.Sleep(0);
+            if (t.ThreadState == System.Threading.ThreadState.Running) break;
+        }
+    }
+    private void _Show()
+    {
+        Application.Run(splashForm);
+    }
+
+    public void Close()
+    {
+        splashForm.Invoke(new MethodInvoker(_Close));
+        if(t.Join(1000)==false)
+        {
+            t.Abort();
+        }
+    }
+
+    private void _Close()
+    {
+        splashForm.Close();
+    }
+    public void OnProgressChanged(object sender, P e)
+    {
+        if (p == null) return;
+        try
+        {
+            splashForm.Invoke(new EventHandler
+            (_OnProgressChanged), new object[] { sender, e });
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private void _OnProgressChanged(object sender, P e)
+    {
+        p(sender, e);
+    }
+}
+
+
+//예제 코드 : 메인폼
+
+public partial class Form1 : Form
+{
+    public Form1()
+    {
+        InitializeComponent();
+    }
+    
+    /*
+    * 쓰레드를 사용하는 스플래쉬 폼
+    * 최초 작성 2017-09-01 @ 밍키
+    */
+
+    //사용 호출 예
+    ThreadedSplashFormController splash = null;
+    private  void button1_Click(object sender, EventArgs e)
+    {
+        splash = new ThreadedSplashFormController(x=>x.ProgressChanged);
+        splash.Show();
+        ThreadedSplashForm.ProgressChangedEventArgs p = new ThreadedSplashForm.ProgressChangedEventArgs();
+
+        //여기서 긴~~~ 작업 실행하거나 호출
+        for (int i = 0; i < 100; i++)
+        {
+            p.Progress=i;
+            splash.OnProgressChanged(this, p);
+            System.Threading.Thread.Sleep(100);
+        }
+        
+        //작업 끝
+        splash.Close();
+    }
+}
+
+
+//예제코드 : 스플래쉬폼, 프로그래스 출력 예제
+
+public partial class ThreadedSplashForm : Form
+{
+    public ThreadedSplashForm()
+    {
+        InitializeComponent();
+    }
+    //스플래쉬폼 프로그레스 이벤트 예
+    public void ProgressChanged(object sender, ProgressChangedEventArgs e)
+    {
+        this.Text = e.Progress.ToString();
+    }
+    public class ProgressChangedEventArgs : EventArgs
+    {
+        public int Progress { get; set; }
+    }
+
+    private void ThreadedSplashForm_Load(object sender, EventArgs e)
+    {
+    }
+}
+
+

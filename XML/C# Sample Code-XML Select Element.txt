@@ -1,0 +1,174 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Windows.Forms;
+using System.Xml;
+using System.Xml.Linq;
+
+namespace HireRight
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        public class Student
+        {
+            public int id { get; set; }
+            public string name { get; set; }
+            public int score { get; set; }
+            public string enrollment { get; set; }
+            public string comment { get; set; }
+        }
+
+        public class StudentsInformation
+        {
+            public string School { get; set; }
+            public string Department { get; set; }
+            public List<Student> Studentlist { get; set; }
+
+            public StudentsInformation()
+            {
+                School = "N/A";
+                Department = "N/A";
+                Studentlist = new List<Student>();
+            }
+        }
+        private void btn_ReadXml1_Click(object sender, EventArgs e)
+        {
+            var doc = new XmlDocument();
+            //doc.Load(txtXmlFile.Text);                        //working
+            string file = File.ReadAllText(txtXmlFile.Text);
+            doc.LoadXml(file);                                  //working
+
+            var students = new StudentsInformation();
+
+            //<EmployeeRosters> --> WORKING
+            //NOT WORKING if there is namespaces in XML Element
+            //<EmployeeRosters xmlns="http://tempuri.org/"> --> NOT WORKING
+
+            XmlNode giNode = doc.SelectSingleNode("/StudentsInformation/GeneralInformation");
+            students.School = giNode.SelectSingleNode("School").InnerText;
+            students.Department = giNode.SelectSingleNode("Department").InnerText;
+
+            XmlNode slNode = doc.SelectSingleNode("/StudentsInformation/Studentlist");
+            XmlNodeList StudentNodeList = slNode.SelectNodes("Student");
+            foreach (XmlNode node in StudentNodeList)
+            {
+                Student aStudent = new Student();
+                aStudent.id = Convert.ToInt16(node.Attributes.GetNamedItem("id").Value);    //Attribute
+                aStudent.name = node.InnerText;     //element data
+                aStudent.score = Convert.ToInt16(node.Attributes.GetNamedItem("score").Value);
+                aStudent.enrollment = node.Attributes.GetNamedItem("enrollment").Value;
+                aStudent.comment = node.Attributes.GetNamedItem("comment").Value;
+                students.Studentlist.Add(aStudent);
+            }
+
+            Print_Student(students);
+            MessageBox.Show("Finished");
+
+            //System.Xml.XmlNode root = doc.ChildNodes.Item(0).ChildNodes.Item(0);
+        }
+
+        private void btn_ReadXml2_Click(object sender, EventArgs e)
+        {
+            var students = new StudentsInformation();
+
+            //using System.Xml.Linq;
+            XDocument doc = XDocument.Load(txtXmlFile.Text);
+
+            XElement giNode = doc.Element("StudentsInformation").Element("GeneralInformation");
+            students.School = giNode.Element("School").Value;
+            students.Department = giNode.Element("Department").Value;
+
+            students.Studentlist = (from c in doc.Descendants("Student")
+                                        select new Student()
+                                        {
+                                            id = Convert.ToInt16(c.Attribute("id").Value),
+                                            name = c.Value,
+                                            score = Convert.ToInt16(c.Attribute("score").Value),
+                                            enrollment = c.Attribute("enrollment").Value,
+                                            comment = c.Attribute("comment").Value
+                                        }
+                                    ).ToList<Student>();
+
+            Print_Student(students);
+            MessageBox.Show("Finished");
+        }
+
+        private void Print_Student(StudentsInformation students)
+        {
+            if (students.Studentlist.Count > 0)
+            {
+                foreach (Student student in students.Studentlist)
+                {
+                    string record = string.Empty;
+                    record += students.School + "|";
+                    record += students.Department + "|";
+                    record += student.id.ToString() + "|";
+                    record += student.name + "|";
+                    record += student.score.ToString() + "|";
+                    record += student.enrollment + "|";
+                    record += student.comment;
+                    using (StreamWriter writer = new StreamWriter(txtTarget.Text + "\\student.txt", true))
+                    {
+                        writer.WriteLine(record);
+                    }
+
+                }
+            }
+        }
+
+        //
+        // XML Element has namespace
+        // <StudentsInformation xmlns="http://tempuri.org/">
+        //
+        private void btn_ReadXml3_Click(object sender, EventArgs e)
+        {
+            var students = new StudentsInformation();
+
+            var doc = new XmlDocument();
+            string file = File.ReadAllText(txtXmlNSFile.Text);
+
+            XmlNamespaceManager namespaces = new XmlNamespaceManager(doc.NameTable);
+            namespaces.AddNamespace("ns", "http://tempuri.org/");
+
+            doc.LoadXml(file);
+
+            //XmlNode giNode = doc.SelectSingleNode("//ns:StudentsInformation", namespaces);
+            XmlNode giNode = doc.SelectSingleNode("/descendant::ns:GeneralInformation", namespaces);
+
+            XmlNode School = doc.SelectSingleNode("descendant::ns:School", namespaces);
+            students.School = School.InnerText;
+            XmlNode Depart = doc.SelectSingleNode("descendant::ns:Department", namespaces);
+            students.Department = Depart.InnerText;
+
+            //other sample: direct search
+            XmlNode Student2 = doc.SelectSingleNode("descendant::ns:Student[@id='2']", namespaces); //>? Student2.InnerText "Abraham Lincoln"
+            XmlNode Student3 = doc.SelectSingleNode("descendant::ns:Student[@id='3']", namespaces); //>? Student3.InnerText "Bill J. Clinton"
+
+            //SHOULD NOT SELECT "<Studentlist>"
+            XmlNodeList StudentNodeList = doc.SelectNodes("descendant::ns:Student", namespaces);
+            foreach (XmlNode node in StudentNodeList)
+            {
+                Student aStudent = new Student();
+                aStudent.id = Convert.ToInt16(node.Attributes["id"].Value);
+                aStudent.name = node.InnerText;
+                aStudent.score = Convert.ToInt16(node.Attributes["score"].Value);
+                aStudent.enrollment = node.Attributes["enrollment"].Value;
+                aStudent.comment = node.Attributes["comment"].Value;
+                students.Studentlist.Add(aStudent);
+            }
+
+            Print_Student(students);
+            MessageBox.Show("Finished");
+
+            //System.Xml.XmlNode root = doc.ChildNodes.Item(0).ChildNodes.Item(0);
+        }
+
+    }
+}

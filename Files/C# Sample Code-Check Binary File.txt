@@ -1,0 +1,22 @@
+
+public static boolean isBinaryFile(path)
+{
+    if (File.Exists(path))
+    {
+        byte[] content = File.ReadAllBytes(path);
+        int ascii = 0;
+        int other = 0;
+
+        for(int i = 0; i < 1024 && i < content.length; i++) {
+            byte b = content[i];
+            if( b < 0x09 ) return true;
+            if( b == 0x09 || b == 0x0A || b == 0x0C || b == 0x0D ) ascii++;     /*(tab)(line feed)(form feed)(carriage return)*/
+            else if( b >= 0x20  &&  b <= 0x7E ) ascii++;                        /* Letters, Numbers and other "normal synbols" */
+            else if( b >= 0xA0  &&  b <= 0xEE ) ascii++;                        /* Symbols of Latin-1 */
+            else other++;
+        }
+        if( other == 0 ) return false;
+
+        return 100 * other / (ascii + other) > 95;
+    }
+}

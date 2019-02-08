@@ -1,0 +1,36 @@
+
+
+    private void OpenFile_Click(object sender, EventArgs e)
+    {
+        openFileDialog1.InitialDirectory = "E:\\";
+        openFileDialog1.FileName = "*";
+        openFileDialog1.Filter = "ISO Files|*.iso";
+        DialogResult result = openFileDialog1.ShowDialog(); // Show the dialog.
+        if (result == DialogResult.OK)                      // Test result.
+        {
+            button1.Enabled = true;
+            button2.Enabled = true;
+            inputfilename.Text = openFileDialog1.FileName;
+            extension = System.IO.Path.GetExtension(inputfilename.Text);
+            filename = System.IO.Path.GetFileName(inputfilename.Text);
+            filenameNoExtension = System.IO.Path.GetFileNameWithoutExtension(inputfilename.Text);
+            fileroot = System.IO.Path.GetPathRoot(inputfilename.Text);
+            filepath = System.IO.Path.GetDirectoryName(inputfilename.Text);
+
+            FileInfo info = new FileInfo(inputfilename.Text);
+            filesize = info.Length;
+            if (filesize > 2147483647)
+            {
+                inputfilename.Text = "Too big file size(Max is 2,147,483,647 bytes)";
+                button1.Enabled = false;
+                button2.Enabled = false;
+            }
+        }
+        else
+        {
+            button1.Enabled = true;
+            button2.Enabled = true;
+            inputfilename.Text = @"E:\Hotel California-Eagles.mp3";
+        }
+    }
+    

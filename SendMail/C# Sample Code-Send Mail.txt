@@ -1,0 +1,246 @@
+<configuration>
+    <!--- do not change tag sequence -->
+    <configSections>  
+      <section name="mailaddress" type="System.Configuration.SingleTagSectionHandler" />  
+      <section name="winscp"      type="System.Configuration.SingleTagSectionHandler" />  
+      <section name="ftpserver"   type="System.Configuration.SingleTagSectionHandler" />  
+      <section name="sftp"        type="System.Configuration.SingleTagSectionHandler" />  
+      <section name="ftps"        type="System.Configuration.SingleTagSectionHandler" />  
+    </configSections>  
+
+    <mailaddress mailFrom="CustomerService@driverfacts.com" 
+        mailto="mlee@driverfacts.com" 
+        mailcc="mcpcomputerinc111@sbcglobal.net" 
+        mailbcc="" />  
+                
+    <winscp ExecutablePath="C:\Program Files (x86)\WinSCP\winscp.exe" 
+        SessionLogPath="" 
+        DebugLogPath="" 
+        sessionTimeout="180" 
+        Logging="true" /> 
+
+    <ftpserver ftpServerIP="207.38.6.247" 
+        ftpUserID="dflistener" 
+        ftpPassword="5rPsQj" 
+        FtpMode="Passive" 
+        remotePath="/" 
+        localPath="D:\FTPMonitor" />  
+        
+    <appSettings>
+      <add key="Protocol" value="FTP" />    <!--- FTP/SFTP/FTPS -->
+      <add key="ftpPort" value="21" />
+    </appSettings>
+    
+    <system.net>
+       <mailSettings>
+          <smtp from="smthg@smthg.net" deliveryMethod="Network">
+             <network host="smtp.gmail.com" port="587" enableSsl="true" 
+                      userName="smthg@smthg.net" password="123456" 
+                      defaultCredentials="true" />
+          </smtp>
+       </mailSettings>
+    </system.net>
+---
+    try
+    {
+        //*** Must appear before ConfigurationManager.GetSection ***
+        string sProtocol = ConfigurationManager.AppSettings["Protocol"].ToString().ToUpper();   //FTP/SFTP/FTPS
+        Int16 FTPPort = Convert.ToInt16(ConfigurationManager.AppSettings["FTPPort"]);           //21
+
+        //Get app.config: mailSettings
+        string configLocation = AppDomain.CurrentDomain.SetupInformation.ConfigurationFile;
+        Configuration config = ConfigurationManager.OpenExeConfiguration(Application.ExecutablePath);
+
+        //*** Must exact match CASE upper or lower: ConfigurationManager.GetSection("mailaddress")
+        //*** ConfigurationErrorsException
+        Hashtable mr = ConfigurationManager.GetSection("mailaddress") as Hashtable;
+        string mailFrom = mr["mailFrom"].ToString();
+        string mailto = mr["mailto"].ToString();
+        string mailcc = mr["mailcc"].ToString();
+        string mailbcc = mr["mailbcc"].ToString();
+
+        Hashtable fs = ConfigurationManager.GetSection("ftpserver") as Hashtable;
+        string ftpServerIP = fs["ftpServerIP"].ToString();              //207.38.6.247
+        string ftpUserID = fs["ftpUserID"].ToString();                  //dflistener
+        string ftpPassword = fs["ftpPassword"].ToString();              //5rPsQj
+        string FtpMode = fs["FtpMode"].ToString();                      //Passive
+        string remotePath = fs["remotePath"].ToString();                //root
+        string localPath = fs["localPath"].ToString();                  //D:\FTPMonitor
+
+        Hashtable ws = ConfigurationManager.GetSection("winscp") as Hashtable;
+        string ExecutablePath = ws["ExecutablePath"].ToString();        //"C:\Program Files (x86)\WinSCP\winscp.exe" 
+        string SessionLogPath = ws["SessionLogPath"].ToString();        //
+        string DebugLogPath = ws["DebugLogPath"].ToString();            //
+        Int16 sessionTimeout = Convert.ToInt16(ws["sessionTimeout"]);   //180
+        Boolean Logging = Convert.ToBoolean(ws["Logging"]);             //true
+
+        ...
+        
+        //---------------smtp.att.yahoo.com------------------
+        CanIRun = true;
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show(ex.Message + "\n\n" + "Please check the config file"
+            + "\n" + "mailreceiver,winscp,ftpserver,sftp,ftps"
+            + "\n" + "tag name is *** lowercase ***"
+        );
+        CanIRun = false;
+    }
+}
+
+private void Form1_Load(object sender, EventArgs e)
+{
+    if (!CanIRun) Application.Exit();             //Quit Program
+
+    this.Text = "FTPMonitor (v2.0)";
+    txtLastStatus.Text = "Waiting...";
+
+--------------------------------
+C# Send Mail : System.Web.Mail : smtp.att.yahoo.com : app.config only loaded when it boots
+--------------------------------
+//   <system.net>
+//      <mailSettings>
+//         <smtp from="CustomerService@driverfacts.com" deliveryMethod="Network" >
+//            <network host="smtp.att.yahoo.com" port="465" enableSsl="true" 
+//                     userName="mcpcomputerinc@sbcglobal.net" password="1275north" 
+//                     defaultCredentials="false" />
+//         </smtp>
+//      </mailSettings>
+//   </system.net>
+
+//The System.Web.Mail namespace provides an API that enables you to create and send messages 
+//using the CDOSYS (Collaboration Data Objects for Windows 2000) message component.
+
+using System.Configuration;         //ConfigurationManager.AppSettings
+using System.Web.Mail;              //CDOSYS
+using System.Net.Configuration;     //MailSettingsSectionGroup  
+
+    //Get app.config: mailSettings
+    //string configLocation = AppDomain.CurrentDomain.SetupInformation.ConfigurationFile;
+    Configuration config = ConfigurationManager.OpenExeConfiguration(Application.ExecutablePath);
+    MailSettingsSectionGroup mailSettings = config.GetSectionGroup("system.net/mailSettings") as MailSettingsSectionGroup;
+    if (mailSettings != null)
+    {
+        string smtpfrom = mailSettings.Smtp.From;           //"CustomerService@driverfacts.com";
+        string smtpDelivery = mailSettings.Smtp.DeliveryMethod.ToString();
+        Boolean defaultCredentials = mailSettings.Smtp.Network.DefaultCredentials;
+    }
+
+    string smtpServer = mailSettings.Smtp.Network.Host;     //"smtp.att.yahoo.com";
+    int port = mailSettings.Smtp.Network.Port;              //465                             <network port
+    string userName = mailSettings.Smtp.Network.UserName;   //"mcpcomputerinc@sbcglobal.net"; <network userName
+    string password = mailSettings.Smtp.Network.Password;   //"1275north";                    <network password
+    Boolean enableSsl = mailSettings.Smtp.Network.EnableSsl;
+    int cdoBasic = 1;           //smtpauthenticate -- 0:cdoAnonymous:No authenticate, 1:cdoBasic:text authentication, 2:cdoNTLM
+    int cdoSendUsingPort = 2;   //2:cdoSendUsingPort
+
+    System.Web.Mail.MailMessage message = new System.Web.Mail.MailMessage();
+    message.Fields.Add("http://schemas.microsoft.com/cdo/configuration/smtpserver", smtpServer);
+    message.Fields.Add("http://schemas.microsoft.com/cdo/configuration/smtpserverport", port);
+    message.Fields.Add("http://schemas.microsoft.com/cdo/configuration/smtpauthenticate", cdoBasic);    //hard code
+    message.Fields.Add("http://schemas.microsoft.com/cdo/configuration/sendusing", cdoSendUsingPort);   //hard code
+    message.Fields.Add("http://schemas.microsoft.com/cdo/configuration/smtpusessl", enableSsl);         
+    message.Fields.Add("http://schemas.microsoft.com/cdo/configuration/sendusername", userName);
+    message.Fields.Add("http://schemas.microsoft.com/cdo/configuration/sendpassword", password);
+    message.From = mailFrom;
+    message.To = mailto;
+    message.Cc = mailcc;
+    message.Bcc = mailbcc;
+    message.Subject = "Subject";
+    message.Body = "Message";
+
+    try
+    {
+        System.Web.Mail.SmtpMail.SmtpServer = smtpServer;   //smarthost
+        System.Web.Mail.SmtpMail.Send(message);
+    }
+    catch (Exception ex)
+    {
+        //Error, could not send the message
+        MessageBox.Show(ex.Message);
+    }
+//---------------smtp.att.yahoo.com------------------
+
+
+-------------------------------------------
+VB 6.0 Send Mail: CDOSYS: System.Web.Mail : smtp.att.yahoo.com
+-------------------------------------------
+    Dim oCDOCon As New CDO.Configuration
+    oCDOCon.Fields.Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+    oCDOCon.Fields.Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "smtp.att.yahoo.com"
+    oCDOCon.Fields.Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 465
+    oCDOCon.Fields.Item("http://schemas.microsoft.com/cdo/configuration/smtpauthenticate") = 1
+    oCDOCon.Fields.Item("http://schemas.microsoft.com/cdo/configuration/sendusername") = "mcpcomputerinc@sbcglobal.net"
+    oCDOCon.Fields.Item("http://schemas.microsoft.com/cdo/configuration/sendpassword") = "1275north"
+    oCDOCon.Fields.Item("http://schemas.microsoft.com/cdo/configuration/smtpconnectiontimeout") = 30
+    oCDOCon.Fields.Item("http://schemas.microsoft.com/cdo/configuration/smtpusessl") = 1
+    oCDOCon.Fields.Update
+
+    Dim oCDOMsg As New CDO.Message
+    Set oCDOMsg.Configuration = oCDOCon
+
+    oCDOMsg.From = "CustomerService@driverfacts.com"
+    oCDOMsg.To = "mcpcomputerinc@sbcglobal.net"
+    oCDOMsg.Subject = Subject
+    oCDOMsg.TextBody = ReportStatus
+    oCDOMsg.Sender = "mcpcomputerinc@sbcglobal.net"
+    oCDOMsg.ReplyTo = "mcpcomputerinc@sbcglobal.net"
+    oCDOMsg.Send
+---------------------------------------------------
+
+
+
+-----------------------------------------------
+C# Send Mail : System.Net.Mail : smtp.gmail.com
+-----------------------------------------------
+using System.Net.Configuration;
+using System.Net.Mail;
+
+    var message = new System.Net.Mail.MailMessage();
+    message.From = new System.Net.Mail.MailAddress("support@atus.cc");
+    message.To.Add("choonkeun@gmail.com");
+    message.Subject = "Subject";
+    message.Body = "This is the body";
+    message.IsBodyHtml = True
+
+    var client = new System.Net.Mail.SmtpClient();
+    client.Host = "smtp.gmail.com";
+    client.Port = 587;
+    client.EnableSsl = true;
+    client.UseDefaultCredentials = false;
+    client.Credentials = new System.Net.NetworkCredential("support@atus.cc", "*************");
+    client.DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network;
+
+    client.Send(message);
+------------------smtp.gmail.com---------------
+    
+---------------------------------------------------
+VB.Net Send Mail : System.Net.Mail : smtp.gmail.com
+---------------------------------------------------
+    Dim message As New MailMessage
+    message.Sender = New MailAddress("info@californiasystem.com")
+    message.From = New MailAddress("support@atus.cc")
+    message.To.Add("info@californiasystem.com")
+    message.Subject = "*** RFQ by Cart ***"
+    message.Body = "<html xmlns='http://www.w3.org/1999/xhtml'>" + vbCrLf
+    message.Body += "<head>" + vbCrLf
+    message.Body += "<title>*** RFQ by Cart ***</title>" + vbCrLf
+    message.Body += "</head>" + vbCrLf
+    message.Body += "<body>" + vbCrLf
+    message.Body += "</body></html>"
+    message.IsBodyHtml = True
+
+    Dim smtp As New SmtpClient("smtp.californiasystem.com")
+    smtp.Host = "smtp.gmail.com"
+    smtp.Port = 587
+    smtp.EnableSsl = True
+    smtp.UseDefaultCredentials = False                          'Before Define than Credential
+    smtp.Credentials = New Net.NetworkCredential("info@californiasystem.com", "***************")
+    smtp.DeliveryMethod = SmtpDeliveryMethod.Network
+
+    smtp.Send(message)
+---------------------------------------------------
+
+
+

@@ -1,0 +1,34 @@
+
+//---------------------------------------
+// Create CreateEventLogFolder Entry
+//---------------------------------------
+
+    //--- Event Log: Create "WCFReport" Folder ---
+    Reasult = CreateEventLogFolder("WCFReport");
+    EventLog.WriteEntry("WCFReport", "WCFReport Client Started", EventLogEntryType.Warning, 1234);
+
+    public bool CreateEventLogFolder(string strLogName)
+    {
+        bool Reasult = false;
+        try
+        {
+            if (!System.Diagnostics.EventLog.SourceExists(strLogName))
+            {
+                System.Diagnostics.EventLog.CreateEventSource(strLogName, strLogName);
+                System.Diagnostics.EventLog SQLEventLog = new System.Diagnostics.EventLog();
+
+                SQLEventLog.Source = strLogName;
+                SQLEventLog.Log = strLogName;
+
+                SQLEventLog.Source = strLogName;
+                SQLEventLog.WriteEntry("The " + strLogName + " was successfully initialized.", EventLogEntryType.Information);
+
+                Reasult = true;
+            }
+        }
+        catch
+        {
+            Reasult = false;
+        }
+        return Reasult;
+    }

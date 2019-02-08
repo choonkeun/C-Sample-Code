@@ -1,0 +1,123 @@
+
+string[] separators = {"Instant MVR service", "MVR service", "has been", "is", " "};
+
+string value0 = "The handsome, energetic, young dog was playing with his smaller, more lethargic litter mate.";
+string value1 = "Florida MVR service has been restored";
+string value2 = "Maryland Instant MVR service is restored.";
+string value3 = "South Carolina MVR service is unavailable";
+
+string[] words0 = value0.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+string[] words1 = value1.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+string[] words2 = value2.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+string[] words3 = value3.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+
+foreach (var word in words0) Console.WriteLine(word);
+
+foreach (var word in words1) Console.WriteLine(word);
+    Florida
+    restored
+
+foreach (var word in words2) Console.WriteLine(word);
+    Maryland
+    restored.
+
+foreach (var word in words3) Console.WriteLine(word);
+    South Carolina
+    unavailable
+
+---
+par.plainBody = "Maryland Instant MVR service is restored."
+>? par.plainBody.Split(new string[] { "Instant MVR service" }, StringSplitOptions.None);
+{string[2]}
+    [0]: "Maryland "
+    [1]: " is restored."
+---
+string phrase = "The quick  brown fox";
+string[] words;
+
+words = phrase.Split(default(string[]), StringSplitOptions.RemoveEmptyEntries);
+words = phrase.Split((string[]) null, StringSplitOptions.RemoveEmptyEntries);
+words = phrase.Split(null as string[], StringSplitOptions.RemoveEmptyEntries);
+---
+par.messageId = message.Headers.MessageId.ToString().Split('@')[0];
+---
+class Example 
+{
+   public static void Main() 
+   {
+      string source = "[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]";
+      string[] stringSeparators = new string[] {"[stop]"};
+      string[] result;
+
+      // Display the original string and delimiter string.
+      Console.WriteLine("Splitting the string:\n   \"{0}\".", source);
+      Console.WriteLine();
+      Console.WriteLine("Using the delimiter string:\n   \"{0}\"", 
+                        stringSeparators[0]);
+      Console.WriteLine();                           
+
+      // Split a string delimited by another string and return all elements.
+      result = source.Split(stringSeparators, StringSplitOptions.None);
+      Console.WriteLine("Result including all elements ({0} elements):", 
+                        result.Length);
+      Console.Write("   ");
+      foreach (string s in result)
+      {
+         Console.Write("'{0}' ", String.IsNullOrEmpty(s) ? "<>" : s);                   
+      }
+      Console.WriteLine();
+      Console.WriteLine();
+
+      // Split delimited by another string and return all non-empty elements.
+      result = source.Split(stringSeparators, 
+                            StringSplitOptions.RemoveEmptyEntries);
+      Console.WriteLine("Result including non-empty elements ({0} elements):", 
+                        result.Length);
+      Console.Write("   ");
+      foreach (string s in result)
+      {
+         Console.Write("'{0}' ", String.IsNullOrEmpty(s) ? "<>" : s);                   
+      }
+      Console.WriteLine();
+   }
+}
+// The example displays the following output:
+//    Splitting the string:
+//       "[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]".
+//    
+//    Using the delimiter string:
+//       "[stop]"
+//    
+//    Result including all elements (9 elements):
+//       '<>' 'ONE' '<>' 'TWO' '<>' '<>' 'THREE' '<>' '<>'
+//    
+//    Result including non-empty elements (3 elements):
+//       'ONE' 'TWO' 'THREE'
+---
+ublic class Example
+{
+   public static void Main()
+   {
+      string[] separators = {",", ".", "!", "?", ";", ":", " "};
+      string value = "The handsome, energetic, young dog was playing with his smaller, more lethargic litter mate.";
+      string[] words = value.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+      foreach (var word in words)
+         Console.WriteLine(word);
+   }
+}
+// The example displays the following output:
+//       The
+//       handsome
+//       energetic
+//       young
+//       dog
+//       was
+//       playing
+//       with
+//       his
+//       smaller
+//       more
+//       lethargic
+//       litter
+//       mate
+------------------

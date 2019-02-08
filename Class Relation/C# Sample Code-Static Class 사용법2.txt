@@ -1,0 +1,58 @@
+
+---Form1.cs
+
+        private void Form1_Load(object sender, System.EventArgs e)
+        {
+            this.Text = "LabCorp Parse (v1.3)";
+
+            Logging.Append_log("Stating...");
+
+            lbl_Status.Text = "Running...";
+            lbl_Minutes.Text = RunInterval.ToString();
+
+            Running = false;
+
+            btnStart.Enabled = false;
+            btnStop.Enabled = true;
+
+            //Timer Run
+            timer1.Interval = 1000;
+            timer1.Enabled = true;
+            timer1.Tick += new EventHandler(timer1_Tick);
+
+            nextTime = DateTime.Now;
+            timer1.Start();     //timer1.Stop();
+            timer1_Tick(timer1, EventArgs.Empty);
+
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Logging.Append_log("Closed...");
+        }
+
+---Logging.cs
+
+using System;
+using System.Configuration;
+using System.IO;
+using System.Windows.Forms;
+
+namespace LabCorpParse
+{
+    class Logging
+    {
+        Configuration config = System.Configuration.ConfigurationManager.OpenExeConfiguration(Application.ExecutablePath);
+        static string appFolder = AppDomain.CurrentDomain.BaseDirectory;
+
+        public static void Append_log(string message)
+        {
+            string logFile = appFolder + @"\Log_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt";
+            using (StreamWriter writer = new StreamWriter(logFile, true))
+            {
+                writer.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " - " + message);
+            }
+        }
+
+    }
+}

@@ -1,0 +1,21 @@
+
+    ------------------------------------------------------
+    c# Get ParentProcessId using current(child) Process Id
+    ------------------------------------------------------
+    var pid = Process.GetCurrentProcess().Id.ToString();
+
+    var query = string.Format("SELECT ParentProcessId FROM Win32_Process WHERE ProcessId = {0}", pid);
+    var search = new ManagementObjectSearcher("root\\CIMV2", query);
+
+    //Way 1
+    var results = from ManagementObject x in search.Get() select x;
+    var queryObj = results.FirstOrDefault();
+
+    //Way 2
+    //var results = search.Get().GetEnumerator();
+    //results.MoveNext();
+    //var queryObj = results.Current;
+
+    var parentId = (uint)queryObj["ParentProcessId"];
+    //var parent = Process.GetProcessById((int)parentId);  //not used
+    ------------------------------------------------------

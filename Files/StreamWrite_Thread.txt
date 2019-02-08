@@ -1,0 +1,68 @@
+//TEST --- Working
+
+   //Global: Thread Object
+    public class ThreadStrean
+    {
+        public int id;          // chunk id
+        public byte[] chunk;    // chunk data after converted
+    }
+    List<ThreadStrean> threadStreams = new List<ThreadStrean>();
+
+    
+    //---TEST
+    for (int i = 0; i < 5; i++)
+    {
+        //Define Thread Object
+        var ts = new ThreadStrean
+        {
+            id = 0,
+            chunk = new byte[] { }
+        };
+
+        //Build chunk data
+        byte[] myByteArray = new byte[] { 0x7e, 0x0d, 0x0a };
+        MemoryStream stream = new MemoryStream();
+        stream.Write(myByteArray, 0, myByteArray.Length);
+
+        byte[] myByteArray2 = new byte[] { 0x7e, 0x0d, 0x0a };
+        stream.Write(myByteArray2, 0, myByteArray2.Length);         //stream has pointer to write
+
+        stream.Seek(0, SeekOrigin.Begin);       //MUST: set point to start
+        byte[] readStream = ReadFully(stream);
+
+        //assign chunk data to Thread Object
+        ts.id = i;
+        ts.chunk = readStream;
+
+        threadStreams.Add(ts);  //result: each chunk will have 1 element and the element has 6 bytes
+    }
+    //---TEST
+    
+//TEST --- Working
+
+    //Working
+    //public static byte[] ReadFullStream(Stream input)
+    //{
+    //    byte[] buffer = new byte[16 * 1024];
+    //    using (MemoryStream ms = new MemoryStream())
+    //    {
+    //        int read;
+    //        while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+    //        {
+    //            ms.Write(buffer, 0, read);
+    //        }
+    //        return ms.ToArray();
+    //    }
+    //}
+
+    //Working - No array length define 
+    public static byte[] ReadFullStream(Stream input)
+    {
+        using (MemoryStream ms = new MemoryStream())
+        {
+            input.CopyTo(ms);
+            return ms.ToArray();
+        }
+    }
+
+    

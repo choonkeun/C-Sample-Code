@@ -1,0 +1,60 @@
+
+Create instance from dynamically loaded assembly
+------------------------------------------------
+
+namespace Test
+{
+    public class Calculator
+    {
+        public Calculator() { ... }
+        private double _number;
+        public double Number { get { ... } set { ... } }
+        public void Clear() { ... }
+        private void DoClear() { ... }
+        public double Add(double number) { ... }
+        public static double Pi { ... }
+        public static double GetPi() { ... }
+    }
+}
+
+
+Assembly testAssembly = Assembly.LoadFile(@"c:\Test.dll");                  // dynamically load assembly from file Test.dll
+
+Type calcType = testAssembly.GetType("Test.Calculator");                    // get type of class Calculator from just loaded assembly
+
+object calcInstance = Activator.CreateInstance(calcType);                   // create instance of class Calculator
+
+PropertyInfo numberPropertyInfo = calcType.GetProperty("Number");           // get info about property: public double Number
+
+double value = (double)numberPropertyInfo.GetValue(calcInstance, null);     // get value of property: public double Number
+
+numberPropertyInfo.SetValue(calcInstance, 10.0, null);                      // set value of property: public double Number
+
+PropertyInfo piPropertyInfo = calcType.GetProperty("Pi");                   // get info about static property: public static double Pi
+
+double piValue = (double)piPropertyInfo.GetValue(null, null);               // get value of static property: public static double Pi
+
+calcType.InvokeMember("Clear",                                              // invoke public instance method: public void Clear()
+    BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.Public,
+    null, calcInstance, null);
+
+// invoke private instance method: private void DoClear()
+calcType.InvokeMember("DoClear",
+    BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.NonPublic,
+    null, calcInstance, null);
+
+// invoke public instance method: public double Add(double number)
+double value = (double)calcType.InvokeMember("Add",
+    BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.Public,
+    null, calcInstance, new object[] { 20.0 });
+
+// invoke public static method: public static double GetPi()
+double piValue = (double)calcType.InvokeMember("GetPi",
+    BindingFlags.InvokeMethod | BindingFlags.Static | BindingFlags.Public,
+    null, null, null);
+
+// get value of private field: private double _number
+double value = (double)calcType.InvokeMember("_number",
+    BindingFlags.GetField | BindingFlags.Instance | BindingFlags.NonPublic,
+    null, calcInstance, null);
+

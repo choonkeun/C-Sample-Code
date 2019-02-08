@@ -1,0 +1,54 @@
+
+=====================================================================================
+How to call a SOAP web service in .NET 4.0 C# without using the WSDL or proxy classes
+=====================================================================================
+
+/// <summary>
+/// Create a soap webrequest to [Url]
+/// </summary>
+/// <returns></returns>
+public HttpWebRequest CreateWebRequest()
+{
+    HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(@"http://dev.nl/Rvl.Demo.TestWcfServiceApplication/SoapWebService.asmx"); 
+    webRequest.Headers.Add(@"SOAP:Action"); 
+    webRequest.ContentType = "text/xml;charset=\"utf-8\""; 
+    webRequest.Accept = "text/xml"; 
+    webRequest.Method = "POST"; 
+    return webRequest; 
+}
+
+/// <summary>
+/// Execute a Soap WebService call
+/// </summary>
+public override void Execute()
+{
+    HttpWebRequest request = CreateWebRequest();
+    XmlDocument soapDataXml = new XmlDocument();
+    soapDataXml.LoadXml(@"<?xml version=""1.0"" encoding=""utf-8""?>
+                                <soap:Envelope xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
+                                <soap:Body>
+                                    <HelloWorld3 xmlns=""http://tempuri.org/"">
+                                        <parameter1>test</parameter1>
+                                        <parameter2>23</parameter2>
+                                        <parameter3>test</parameter3>
+                                    </HelloWorld3>
+                                </soap:Body>
+                                </soap:Envelope>");
+            
+    using (Stream stream = request.GetRequestStream()) 
+    { 
+		//1. The 'request' is made by CreateWebRequest() and it has URL
+		//2. stream to use to write request data.
+		//3. XmlDocument.Save saves the XML document to the specified location(URL)
+        soapDataXml.Save(stream); 
+    }
+
+    using (WebResponse response = request.GetResponse())
+    {
+        using (StreamReader rd = new StreamReader(response.GetResponseStream())) 
+        { 
+            string soapResult = rd.ReadToEnd();
+            Console.WriteLine(soapResult);
+        } 
+    }
+}

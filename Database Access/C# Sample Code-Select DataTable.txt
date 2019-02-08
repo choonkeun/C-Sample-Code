@@ -1,0 +1,27 @@
+    public static string GetLabCodeTimeZone(string CS1, string LabCode)
+    {
+        string TimeZoneName = string.Empty;
+        using (System.Data.SqlClient.SqlConnection con = new SqlConnection(CS1))
+        {
+            string query = "SELECT labLocTZ FROM labLocations ";
+            query += " WHERE labID = @labID AND labCode = @labCode" ;
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.CommandTimeout = 50;
+            cmd.CommandType = CommandType.Text;
+            cmd.Parameters.AddWithValue("@labID", 1);
+            cmd.Parameters.AddWithValue("@labCode", LabCode);
+
+            DataTable dt = new DataTable();
+            using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+            {
+                cmd.Connection = con;
+                con.Open();
+                da.Fill(dt);
+                foreach (DataRow dr in dt.Rows)
+                {
+                    TimeZoneName = Convert.ToString(dr["labLocTZ"] == System.DBNull.Value ? String.Empty : dr["labLocTZ"]);
+                }
+            }
+        }
+        return TimeZoneName;
+    }

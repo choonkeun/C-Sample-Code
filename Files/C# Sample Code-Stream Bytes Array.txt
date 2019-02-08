@@ -1,0 +1,45 @@
+
+
+    //call function 
+    FileStream fs = new FileStream(@"C:\test.tif", FileMode.Open, FileAccess.Read);
+    byte[] FileBytes = StreamToBytes(fs)
+
+    
+    //copy byte[] to stream 
+    Stream sourceStream = new MemoryStream(FileBytes);     //copy byte[] to stream
+    
+    
+    //copy stream to byte[]
+    public byte[] StreamToBytes(System.IO.Stream stream)
+    {
+        byte[] buf;                         // byte array
+        buf = new byte[stream.Length];      // declare arraysize
+        stream.Read(buf, 0, buf.Length);    // read from stream to byte array
+        return buf;
+    }
+    
+    
+    //write stream to file
+    Stream sourceStream = request.FileByteStream;   //source filestream
+    using (targetStream = new FileStream(@"C:\targetfile.xxx", FileMode.Create, FileAccess.Write, FileShare.None))
+    {
+        const int bufferLen = 65000;
+        byte[] buffer = new byte[bufferLen];
+        int count = 0;
+        while ((count = sourceStream.Read(buffer, 0, bufferLen)) > 0)
+        {
+            // save to output stream
+            targetStream.Write(buffer, 0, count);
+        }
+    }
+    
+    //copy string to byte[]
+    var securityKey = GetBytes("ThisIsAnImportantStringAndIHaveNoIdeaIfThisIsVerySecureOrNot!");
+    
+    static byte[] GetBytes(string str)
+    {
+        byte[] bytes = new byte[str.Length * sizeof(char)];
+        System.Buffer.BlockCopy(str.ToCharArray(), 0, bytes, 0, bytes.Length);
+        return bytes;
+    }    
+    

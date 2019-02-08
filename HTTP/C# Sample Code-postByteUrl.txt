@@ -1,0 +1,287 @@
+
+    public Byte[] getByteURL(string url)
+    {
+        byte[] outBytes;
+        try 
+        {	
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            //request.CookieContainer = cookieJar;
+            //request.Accept = "*/*";
+            //request.AllowAutoRedirect = true;
+            //request.UserAgent = "http_requester/0.1";
+            //request.Timeout= 60000;
+            request.Method = WebRequestMethods.Http.Get;
+            
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                Stream ReceiveStream = response.GetResponseStream();
+                outBytes = StreamToByte(ReceiveStream);
+            }
+
+        } 
+        catch (WebException e)
+        {
+            string errCode = ((int)((System.Net.HttpWebResponse)(e.Response)).StatusCode).ToString();
+            string errMsg = ((System.Net.HttpWebResponse)(e.Response)).StatusCode.ToString();
+            content = errCode + " " + errMsg;
+        }
+        response.Close();
+        return outBytes;
+    }
+
+    
+    //copy stream to byte[]
+    public byte[] StreamToByte(System.IO.Stream stream)
+    {
+        byte[] buf;                         // byte array
+        buf = new byte[stream.Length];      // declare arraysize
+        stream.Read(buf, 0, buf.Length);    // read from stream to byte array
+        return buf;
+    }
+
+    
+    
+    public Byte[] postByteURL(string url, string postText)
+    {
+        byte[] outBytes;
+        byte[] result;
+        byte[] buffer = new byte[4096];
+
+        try 
+        {	
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = WebRequestMethods.Http.Post;
+            request.ContentType = "application/x-www-form-urlencoded";
+
+            //Way 1
+            System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
+            byte[] postByte = encoding.GetBytes(postText);
+            request.ContentLength = postByte.Length;
+            System.IO.Stream postStream = request.GetRequestStream();
+            postStream.Write(postByte, 0, postByte.Length);
+            postStream.Close();            
+
+            //Way 2
+            request.ContentLength = postText.Length;
+            using (StreamWriter writer = new StreamWriter(request.GetRequestStream()))
+            {
+                writer.Write(postText);     //send data
+            }
+
+            HttpWebResponse response = (System.Net.HttpWebResponse)request.GetResponse();
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                Stream ReceiveStream = response.GetResponseStream();
+                outBytes = StreamToByte(ReceiveStream);
+            }
+            else
+                outBytes = Encoding.ASCII.GetBytes(Encoding.ASCII.GetBytes(response.StatusCode.ToString()));
+        } 
+        catch (WebException e)
+        {
+            string errCode = Encoding.ASCII.GetBytes(((int)((System.Net.HttpWebResponse)(e.Response)).StatusCode).ToString());
+            string errMsg = Encoding.ASCII.GetBytes(((System.Net.HttpWebResponse)(e.Response)).StatusCode.ToString());
+            content = errCode + " " + errMsg;
+        }
+        response.Close();
+        return outBytes;
+    }
+    
+    ================================================================================================
+    CLIENT
+    ------------------------------------------------------------------------------------------------
+    1. POST binary file to SERVER
+    2. Receive binary file
+    3. Save file as newfile
+    ================================================================================================
+    
+        //string fName = fi.FullName.Substring(pathLength).ToLower();
+        string fName = Path.GetFileNameWithoutExtension(fi.FullName);
+        string newfile = Path.Combine(newfolder, fName) + ".tif";
+        string newDir = Path.GetDirectoryName(newfile);
+        string sourceName = fName + ".pdf";
+    
+        byte[] postData = File.ReadAllBytes(fi.FullName);
+        string url = http://HOME/ABCpdf/PDF_to_TIF.aspx;
+        string Results = postDataURL(url, postData, dotinchX, dotinchY, maxpages, newfile);
+
+        if (Results == "over max count")
+        {
+            Logging(fi.FullName + " is over max count.");
+            theDoc.Clear();
+            if (File.Exists(maxfolder + sourceName)) File.Delete(maxfolder + sourceName);
+            File.Move(fi.FullName, maxfolder + sourceName);
+        }
+        if (Results == "O.K")
+        {
+            Logging(fi.FullName);
+            if (File.Exists(arcfolder + sourceName)) File.Delete(arcfolder + sourceName);
+            File.Move(fi.FullName, arcfolder + sourceName);
+        }
+
+
+    //POST to http://HOME/ABCpdf/PDF_to_TIF.aspx
+
+    private string postDataURL(string url, byte[] postData, int X, int Y, int Max, string newfile)
+    {
+        try
+        {
+            //StreamWriter postStream = null;
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = WebRequestMethods.Http.Post;       //request.Method = "POST";
+            request.ContentType = "multipart/form-data";
+            request.ContentType = "application/x-www-form-urlencoded";
+            request.Headers["dotinchX"] = X.ToString();
+            request.Headers["dotinchY"] = Y.ToString();
+            request.Headers["maxpages"] = Max.ToString();
+            request.ContentLength = postData.Length;
+
+            Stream postStream = request.GetRequestStream();
+            postStream.Write(postData, 0, postData.Length);     //Send
+
+            //Receive Data
+            byte[] tifStream = new byte[0];
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            Results = response.Headers["ConvertResults"];
+
+            System.IO.Stream stream = response.GetResponseStream();
+            using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+            {
+                //tifStream = reader.ReadToEnd();               //received to string 
+                using (var memstream = new MemoryStream())      //received to byte[]
+                {
+                    reader.BaseStream.CopyTo(memstream);
+                    tifStream = memstream.ToArray();
+                }
+            }
+            System.IO.File.WriteAllBytes(newfile, tifStream);
+            return Results;
+        }
+        catch (Exception ex)
+        {
+            //Log exception here...
+            return "";
+        }
+    }
+
+    //Not Used
+    public Byte[] StreamToByteArray(Stream tifStream)
+    {
+        using (var memoryStream = new MemoryStream())
+        {
+            tifStream.CopyTo(memoryStream);
+            return memoryStream.ToArray();
+        }
+    }
+
+    ================================================================================================
+    SERVER
+    ------------------------------------------------------------------------------------------------
+    1. Check Header
+    1. Receive POSTED stream file to Byte[]
+    2. Read binary file into Byte[]
+    3. Response.BinaryWrite(outStream) with Header --- Do not use Response.Close();
+    ================================================================================================
+
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        if(Request.Headers["dotinchX"] != null) dotinchX = Convert.ToInt32(Request.Headers["dotinchX"]);
+        if(Request.Headers["dotinchY"] != null) dotinchY = Convert.ToInt32(Request.Headers["dotinchY"]);
+        if(Request.Headers["maxpages"] != null) maxpages = Convert.ToInt32(Request.Headers["maxpages"]);
+
+        byte[] inStream = ReadPostBinary(Request.InputStream);
+
+        byte[] outStream = new byte[0];
+        if (inStream.Length > 0)
+        {
+            outStream = Do_Convert_TIF(inStream);
+            Response.BinaryWrite(outStream);
+            //Response.OutputStream.Write(outStream, 0, outStream.Length);
+            //Response.ContentType = "application/pdf";
+            //Response.AddHeader("Content-Disposition", String.Format("inline; filename={0}.pdf", Path.GetFileName(Path)));
+            Response.ContentType = "image/tiff";
+            Response.AppendHeader("ConvertResults", Tiff_Status);
+            Response.Flush();
+            //Response.Close();     //DO NOT USE: caller can not receive data because connection is closed
+            //Response.End();
+        }
+    }
+
+    //read 'POST pdf file' into memory
+    public static byte[] ReadPostBinary(Stream input)
+    {
+        byte[] buffer = new byte[16 * 1024];
+        using (MemoryStream ms = new MemoryStream())
+        {
+            int read;
+            while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                ms.Write(buffer, 0, read);
+            }
+            return ms.ToArray();
+        }
+    }    
+    
+    private byte[] Do_Convert_TIF(byte[] inStream)
+    {
+        Tiff_Status = "O.K";
+        Doc theDoc = new Doc();
+        string tmpfile = Path.Combine(HttpRuntime.AppDomainAppPath, "tmp.tif");
+        try
+        {
+            theDoc.Read(inStream);
+            //void Read(string path)
+            //void Read(byte[] data)
+            //void Read(Stream stream)
+            //void Read(string path, string password)
+            //void Read(byte[] data, string password)
+            //void Read(Stream stream, string password)
+            //void Read(string path, XReadOptions options)
+            //void Read(byte[] data, XReadOptions options)
+            //void Read(Stream stream, XReadOptions options)
+
+            theDoc.Rendering.ColorSpace = XRendering.ColorSpaceType.Gray;
+            theDoc.Rendering.BitsPerChannel = 1;
+            theDoc.Rendering.DotsPerInchX = dotinchX;
+            theDoc.Rendering.DotsPerInchY = dotinchY;
+            theDoc.Rendering.AntiAliasImages = true;
+            theDoc.Rendering.AutoRotate = true;
+            theDoc.Rendering.SaveQuality = 100;
+            theDoc.SetInfo(0, "ImageCompression", "4");
+            theDoc.Rendering.SaveCompression = XRendering.Compression.G4;
+
+            int pdfPageCount = theDoc.PageCount;
+            int i;
+
+            if (pdfPageCount > maxpages)
+            {
+                Tiff_Status = "over max count";
+                theDoc.Clear();
+            }
+            else 
+            {
+                //loop through the pages
+                for (i = 1; i <= pdfPageCount; i++)
+                {
+                    theDoc.PageNumber = i;
+                    theDoc.Rect.String = theDoc.CropBox.String;
+                    theDoc.Rendering.SaveAppend = (i != 1);
+                    theDoc.SetInfo(0, "ImageCompression", "4");
+                    theDoc.Rendering.SaveCompression = XRendering.Compression.G4;
+                    theDoc.Rendering.Save(tmpfile);
+                }
+                Tiff_Status = "O.K";
+                theDoc.Clear();
+            }
+        }
+        catch (IOException ex)
+        {
+            Tiff_Status = "convert failed: " + ex.Message;
+            theDoc.Clear();
+        }
+        byte[] tifImage = File.ReadAllBytes(tmpfile);
+        File.Delete(tmpfile);
+        return tifImage;
+    }
+    

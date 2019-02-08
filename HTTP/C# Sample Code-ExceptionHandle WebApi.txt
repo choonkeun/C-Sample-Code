@@ -1,0 +1,105 @@
+
+    ---WebApiConfig.cs
+    public static class WebApiConfig
+    {
+        public static void Register(HttpConfiguration config)
+        {
+            //Remove the XM Formatter from the web api
+            config.Formatters.Clear();
+            config.Formatters.Add(new FormUrlEncodedMediaTypeFormatter());
+            //config.Formatters.Add(new JsonMediaTypeFormatter());
+
+            config.Formatters.Add(new XmlMediaTypeFormatter());
+            var xml = GlobalConfiguration.Configuration.Formatters.XmlFormatter;
+            xml.UseXmlSerializer = true;
+
+            // Web API configuration and services
+
+
+
+    ---SendResultController.cs
+    public class HandleExceptionAttribute : ExceptionFilterAttribute
+    {
+
+        public Type Type { get; set; }
+        public HttpStatusCode Status { get; set; }
+
+        public override void OnException(HttpActionExecutedContext context)
+        {
+            var ex = context.Exception;
+            if (ex.GetType() is Type)
+            {
+                var response = context.Request.CreateResponse(Status, ex.Message);
+                throw new HttpResponseException(response);
+            }
+        }
+        public override async Task OnExceptionAsync(HttpActionExecutedContext context, CancellationToken cancellationToken)
+        {
+            await HandleException(context);
+        }
+        private Task HandleException(HttpActionExecutedContext context)
+        {
+            var ex = context.Exception;
+
+            if (ex.GetType() is Type)
+            {
+                //create Psychemedics WsException
+                Psychemedics.Controllers.SendResultController.SendResult_ERROR
+                    sendResult_ERROR = new Psychemedics.Controllers.SendResultController.SendResult_ERROR();
+                sendResult_ERROR.message = Codes.GetCodes(1);
+
+                var response = context.Request.CreateResponse(Status, sendResult_ERROR);
+                throw new HttpResponseException(response);
+            }
+            //return Task.CompletedTask;  //.net 4.6
+            return Task.Delay(0);
+        }
+    }
+
+    public class SendResultController : ApiController
+    {
+        [XmlRoot("WsException")]
+        public class SendResult_ERROR
+        {
+            [XmlElement("message")]
+            public string message { get; set; }
+        }
+
+        [XmlRoot("resultResponse")]
+        public class SendResult_Response
+        {
+            [XmlElement("status")]
+            public string status { get; set; }
+        }
+
+
+        //ApiController level exception handling
+        [HandleException(Type = typeof(ArgumentNullException), Status = HttpStatusCode.BadRequest)]
+        [HandleException(Type = typeof(Exception), Status = HttpStatusCode.NotAcceptable)]
+
+        [Route("LabData/Psychemedics/PostEDIData")]
+        [HttpPost]
+        public async Task<HttpResponseMessage> CreateResult(HttpRequestMessage request)
+        {
+            try
+            {
+                IEnumerable<string> headerValues = request.Headers.GetValues("Username");
+                var Username = headerValues.FirstOrDefault();
+
+                headerValues = request.Headers.GetValues("Password");
+                var Password = headerValues.FirstOrDefault();
+
+                if (Username != null && Password != null)
+                {
+                    //bool validUser = ValidateUser(Username, Passwrod);
+                    //if (!validUser)
+                    //    return Request.CreateResponse(HttpStatusCode.BadRequest, "Username or Passwrod is incorrect");
+                }
+            }
+            catch (Exception)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "Username or Passwrod is incorrect");
+            }
+
+            string requestString = await request.Content.ReadAsStringAsync();
+

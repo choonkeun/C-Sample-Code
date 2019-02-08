@@ -1,0 +1,91 @@
+
+    string conStr = ConfigurationManager.ConnectionStrings["ConnString"].ConnectionString;
+
+    //Sample
+    public static int Insert(string queryStr, SqlParameter[] sqlParameterArray)
+    {
+        SqlConnection con = new SqlConnection(conStr);
+        SqlCommand cmd = new SqlCommand();
+        cmd.CommandType = CommandType.StoredProcedure;
+        cmd.CommandText = queryStr;
+        cmd.Parameters.AddRange(sqlParameterArray);
+
+        
+    //Sample
+    public int AddParameter(string name, object value)
+    {
+        DbParameter parm = _factory.CreateParameter();
+        parm.ParameterName = name;
+        parm.Value = value;
+        return cmd.Parameters.Add(parm);
+    }
+
+    //Sample
+    public int AddParameter(DbParameter parameter)
+    {
+        return cmd.Parameters.Add(parameter);
+    }
+
+    //---Sample
+    SqlConnection con = new SqlConnection("Data Source=localhost; Initial Catalog=northwind;UID=sa;PWD=;");
+    con.Open();
+    
+    //Create Command
+    SqlCommand cmd = new SqlCommand("AddNewCustomer", con);
+    
+    //Create Command
+    SqlCommand cmd = new SqlCommand();
+    cmd.Connection = con;
+    cmd.CommandTimeout = 50;
+    cmd.CommandType = CommandType.StoredProcedure;
+    cmd.CommandType = CommandType.Text;
+    cmd.CommandText = "SELECT * FROM Customers";
+    
+    //Configure input parameters
+    SqlParameter param = new SqlParameter();
+    param = cmd.Parameters.Add(new SqlParameter("@Name", SqlDbType.NVarChar, 20));
+    param.Direction = Parameter.Direction.Input;
+    param.Value = sName.Text;
+
+    //Configure output parameters
+    param = cmd.Parameters.Add(new SqlParameter("@retval", SqlDbType.Int, 4));
+    param.Direction = ParameterDirection.Output;
+
+    cmd.Parameters.Add(param);
+    
+    
+    //Declare and configure parameter
+    SqlParameter param = cmd.CreateParameter();
+    param.ParameterName = "@CustomerName";
+    param.DbType = SqlDbType.NVarChar;
+    param.Size = 25;
+    param.Value = "John";
+    param.Direction = ParameterDirection.Input;
+    
+    //adds SQL parameters to the parameter collection.
+    cmd.Parameters.Add(param);
+
+    //access a specific SQL parameter in the collection, by name or by index.
+    param2 = cmd.Parameters["@CustomerName"];
+    param3 = cmd.Parameters[0];
+
+    //clear
+    cmd.Parameters.Clear();    
+
+    //returns True if the specified items are found in the parameter collection.
+    Bool IsPresent = cmd.Parameters.Contains(param);
+    Bool IsPresent2 = cmd.Parameters.Contains("@CustomerName");
+    
+    //insert parameter
+    cmd.Parameters.Insert(0, param);
+    
+    //Remove parameters
+    cmd.Parameters.Remove(param);
+    
+    //Remove parameters
+    cmd.Parameters.RemoveAt(0);
+    cmd.Parameters.RemoveAt("@company");
+
+
+    cmd.ExecuteNonQuery();
+

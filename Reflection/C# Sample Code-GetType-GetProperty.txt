@@ -1,0 +1,122 @@
+
+    internal class ODataResponse<T>
+    {
+        public List<T> Value { get; set; }
+    }
+
+    private DataTable BuildDataTable(string fields)
+    {
+        DataTable dt = new DataTable("GridTable");
+
+        string[] fieldNameList = fields.Split(',');
+        foreach(var item in fieldNameList)
+        {
+            dt.Columns.Add(item, System.Type.GetType("System.String"));
+        }
+        for (int i = 0; i < dt.Columns.Count; i++)
+        {
+            dt.Columns[i].AllowDBNull = true;
+        }
+        return dt;
+    }
+---
+
+    string[] inputFields = targetURL1.Substring(targetURL1.IndexOf("$select=") + 8).Split(',');
+    DataTable dt = BuildDataTable(targetURL1.Substring(targetURL1.IndexOf("$select=") + 8));
+
+    string response1 = postDataURL(targetURL1);
+    string response2 = postDataURL(targetURL2);
+    var result1 = JsonConvert.DeserializeObject<ODataResponse<labData_XML>>(response1);
+    var result2 = JsonConvert.DeserializeObject<ODataResponse<labData_XML>>(response2);
+
+    for (int t = 0; t < result1.Value.Count; t++)
+    {
+        DataRow newRow1 = dt.NewRow();
+        DataRow newRow2 = dt.NewRow();
+        object obj1 = result1.Value[t];     //rows
+        object obj2 = result2.Value[t];
+        for (int i = 0; i < dt.Columns.Count; i++)
+        {
+            string fldName = inputFields[i];
+            
+            //Way 1
+            var prop1 = obj1.GetType().GetProperty(fldName);
+            newRow1[i] = string.Format("{0}", prop1.GetValue(obj1, null));
+            
+            //Way 2
+            //var r1 = result1.Value[t].GetType().GetProperty(fldName);
+            //Type ft = prop1.GetType();
+            //if (prop1.PropertyType == typeof(string))   newRow1[i] =   (String)r1.GetValue(result1.Value[t], null);
+            //if (prop1.PropertyType == typeof(DateTime)) newRow1[i] = (DateTime)r1.GetValue(result1.Value[t], null);
+            //if (prop1.PropertyType == typeof(int))      newRow1[i] =      (int)r1.GetValue(result1.Value[t], null);
+            //if (prop1.PropertyType == typeof(long))     newRow1[i] =     (long)r1.GetValue(result1.Value[t], null);
+
+            var prop2 = obj2.GetType().GetProperty(fldName);
+            newRow2[i] = string.Format("{0}", prop2.GetValue(obj2, null));
+        }
+        dt.Rows.Add(newRow1);
+        dt.Rows.Add(newRow2);
+    }
+
+    GridView1.DataSource = null;
+    GridView1.DataSource = dt;
+    GridView1.DataBind();               //call GridView1_RowDataBound
+---
+
+    protected void GridView1_RowDataBound(object sender, GridViewRowEventArgs e)
+    {
+        e.Row.Attributes.Add("style", "cursor:pointer;");
+        e.Row.HorizontalAlign = HorizontalAlign.Center;
+        if (e.Row.RowType == DataControlRowType.DataRow && e.Row.RowState == DataControlRowState.Alternate)
+        { 
+            if (e.Row.RowType == DataControlRowType.Header)
+            {
+                //e.Row.Cells[0].Text = "Date";
+            }
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+                e.Row.Attributes.Add("onmouseover", "this.style.backgroundColor='#FFF0F5'");
+                e.Row.Attributes.Add("onmouseout", "this.style.backgroundColor='#F8F8FF'");
+                e.Row.BackColor = System.Drawing.Color.FromName("#F8F8FF");
+            }
+        }
+        else
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+                e.Row.Attributes.Add("onmouseover", "this.style.backgroundColor='#FFF0F5'");
+                e.Row.Attributes.Add("onmouseout", "this.style.backgroundColor='#F0F8FF'");
+                e.Row.BackColor = System.Drawing.Color.FromName("#F0F8FF");      //
+                e.Row.HorizontalAlign = HorizontalAlign.Center;
+            }
+        }
+        //http://www.rapidtables.com/web/color/RGB_Color.htm
+        //e.Row.Cells[0].BackColor = System.Drawing.Color.Red;
+        //e.Row.BorderWidth = 2;
+        //e.Row.BorderColor = Color.FromName("#43C6DB");
+        //e.Row.BackColor = System.Drawing.Color.Red // This will make row back color red
+        //e.Row.Attributes.CssStyle.Value = "background-color: DarkRed; color: White";
+    }
+
+    //System.Reflection: To inspect class 
+    public List<string> GetPropertiesNameOfClass(List<string> selectFields, object obj)
+    {
+        List<string> propertyList = new List<string>();
+        if (obj != null)
+        {
+            foreach (var prop in obj.GetType().GetProperties())
+            {
+                var result = selectFields.FirstOrDefault(e => e.Contains(prop.Name));
+                if (result != null)
+                {
+                    //string classItems = string.Format("{0}={1}", prop.Name, prop.GetValue(obj, null));
+                    //propertyList.Add(classItems);
+                    propertyList.Add(string.Format("{0}", prop.GetValue(obj, null)));
+                    //propertyList.Add(prop.Name);
+                    //Debug.WriteLine("{0}={1}", prop.Name, prop.GetValue(obj, null));
+                }
+            }
+        }
+        return propertyList;
+    }
+

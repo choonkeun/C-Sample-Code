@@ -1,0 +1,67 @@
+
+	-----------------------------------
+	XML namespace search and get values
+	-----------------------------------
+
+	public int CreateResult(string FullFileName)
+	{
+		//DB connection string
+		string CS = ConfigurationManager.ConnectionStrings["DBCS1"].ConnectionString;
+
+		string fileString = string.Empty;
+		fileString = File.ReadAllText(FullFileName); 
+
+		//Parse XML: multiple namespaces
+		var doc = new XmlDocument();
+		XmlNamespaceManager namespaces = new XmlNamespaceManager(doc.NameTable);
+		namespaces.AddNamespace("soapenv", "http://schemas.xmlsoap.org/soap/envelope/");
+		namespaces.AddNamespace("p233", "http://cws.ots.labcorp.com");
+
+		try
+		{
+			doc.LoadXml(fileString);
+
+			XmlElement root = doc.DocumentElement;
+			XmlNode body = root.SelectSingleNode("//soapenv:Body", namespaces);
+			XmlNode result = root.SelectSingleNode("//p233:result", namespaces);
+			if (result == null) return 0;   //xml is not "<p233:result>"
+
+			XmlNode nodeUserId = result.SelectSingleNode("//p233:userId", namespaces);
+			XmlNode nodePassword = result.SelectSingleNode("//p233:password", namespaces);
+			XmlNode nodeAccessionNumber = result.SelectSingleNode("//p233:accessionNumber", namespaces);
+
+			string userId = nodeUserId.InnerText;
+			string password = nodePassword.InnerText;
+			
+			SendResult R = new SendResult();
+			R.accessionNumber = nodeAccessionNumber.InnerText;
+
+			//Comment-Repeat elements
+			if (nodeStartReportComments != null && nodeStartReportComments.Count > 0)
+			{
+				SaveToNotes(nodeStartReportComments);
+			}
+		}
+		catch (Exception ex)
+		{
+			MessageBox.Show(ex.Message);
+			return -1;   //XML has an error
+		}
+		return 1; //success
+	}
+
+	private void SaveToNotes(XmlNodeList comments)
+	{
+		var doc = new XmlDocument();
+		XmlNamespaceManager namespaces = new XmlNamespaceManager(doc.NameTable);
+		namespaces.AddNamespace("p233", "http://cws.ots.labcorp.com");
+		for (int i = 0; i < comments.Count; i++)
+		{
+			XmlNode node = comments.Item(i);
+			Comment comment = new Comment();
+			comment.commentType = node.SelectSingleNode("//p233:commentType", namespaces).InnerText;
+			comment.commentText = node.SelectSingleNode("//p233:commentText", namespaces).InnerText.Trim();
+			comment.abbreviation = node.SelectSingleNode("//p233:abbreviation", namespaces).InnerText;
+		}
+	}
+		

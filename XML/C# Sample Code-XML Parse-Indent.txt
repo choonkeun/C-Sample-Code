@@ -1,0 +1,27 @@
+		public static string IndentXMLString(string xml)
+		{
+			string outXml = string.Empty;
+			MemoryStream ms = new MemoryStream();
+
+			// Create a XMLTextWriter that will send its output to a memory stream (file)
+			XmlTextWriter xtw = new XmlTextWriter(ms, Encoding.Unicode);
+			XmlDocument doc = new XmlDocument();
+
+			try
+			{
+				doc.LoadXml(xml);
+
+				xtw.Formatting = Formatting.Indented;
+				doc.WriteContentTo(xtw);                //indent when write to file or memory
+				xtw.Flush();
+
+				ms.Seek(0, SeekOrigin.Begin);
+				StreamReader sr = new StreamReader(ms);
+				return sr.ReadToEnd();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.ToString());
+				return string.Empty;
+			}
+		}

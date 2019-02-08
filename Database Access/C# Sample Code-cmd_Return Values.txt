@@ -1,0 +1,139 @@
+
+----------------------------------------------------------------------------------------------------
+1. Return integer value
+----------------------------------------------------------------------------------------------------
+public int Get_CliId(string CS1, string accountNumber)
+{
+    using (SqlConnection con = new SqlConnection(CS1))
+    {
+        string strSql = "Select * from labTermXref where LabId=1 And MROId=3 ";
+        strSql += " And labAcctCode = @acctNum ";
+        SqlCommand cmd = new SqlCommand(strSql, con);
+        cmd.Parameters.AddWithValue("@acctNum", accountNumber);
+        con.Open();
+        int CliId = Convert.ToInt32(cmd.ExecuteScalar());
+        return CliId;
+    }
+}
+
+----------------------------------------------------------------------------------------------------
+2. Return '@@Identity' as string value
+----------------------------------------------------------------------------------------------------
+private string Insert_DACCF(string CS2, Qtys_Record REC_Qtys, int cliId)
+{
+    string ccfNumber = string.Empty;
+    using (System.Data.SqlClient.SqlConnection con = new SqlConnection(CS2))
+    {
+        string query = "INSERT INTO DACCF ";
+        query += "(LabId, MROId, CliId, SSN, ccfnumber, CreatedByGroup, testForm ) VALUES ";
+        query += "(@LabId, @MROId, @CliId, @SSN, @ccfnumber, @testReason, @testForm ); ";
+        SqlCommand cmd = new SqlCommand(query, con);
+        cmd.Parameters.AddWithValue("@LabId", REC_Qtys.LabId);
+        cmd.Parameters.AddWithValue("@testReason", REC_Qtys.ReasonTest);
+        cmd.Parameters.AddWithValue("@testForm", REC_Qtys.DOTReg);
+
+        string query1 = "Select @@Identity;";
+
+        try
+        {
+            con.Open();
+            long recordAffected = cmd.ExecuteNonQuery();
+
+            if (recordAffected > 0)
+            {
+                cmd.CommandText = query1;
+                ccfNumber = cmd.ExecuteScalar().ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            repository.Append_log(" - " + ex.Message, false);
+        }
+    }
+    return ccfNumber;
+}
+
+----------------------------------------------------------------------------------------------------
+3. Return 'recordAffected' as string value
+----------------------------------------------------------------------------------------------------
+private string Update_DACCF(string CS2, Qtys_Record REC_Qtys, int DACCFId)
+{
+    string result = "-1";
+    using (System.Data.SqlClient.SqlConnection con = new SqlConnection(CS2))
+    {
+        string strSql = "UPDATE DACCF SET ";
+        strSql += " testReason = @testReason, testForm = @testForm, ssn = @ssn, LabDataRcvTS = @LabDataRcvTS ";
+        strSql += " WHERE DACCFId = @DACCFId";
+
+        SqlCommand cmd = new SqlCommand(strSql, con);
+        cmd.Parameters.Add("@ssn", SqlDbType.Int).Value = REC_Qtys.DonorSSN;
+        cmd.Parameters.Add("@LabDataRcvTS", SqlDbType.DateTime).Value = DateTime.Now;
+        cmd.Parameters.Add("@DACCFId", SqlDbType.Int).Value = DACCFId;
+
+        try
+        {
+            con.Open();
+            int recordAffected = cmd.ExecuteNonQuery();
+            if (recordAffected > 0)
+            {
+                result = recordAffected.ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            repository.Append_log(" - " + ex.Message, false);
+        }
+    }
+    return result;
+}
+
+----------------------------------------------------------------------------------------------------
+4. Return 'Custom Class' value
+----------------------------------------------------------------------------------------------------
+public class DACCF_Record
+{
+    public Boolean RecFound { get; set; }
+    public int DACCFId { get; set; }
+    public DateTime MRORcvCCF2TS { get; set; }
+    public int NoFlaws { get; set; }
+    public int NoCollName { get; set; }
+    public int NoCollSig { get; set; }
+    public int DonorSSN { get; set; }
+}
+
+private DACCF_Record Get_DACCF_Record(string CS2, int LabId, int MROId, string CcfNum, int CliId)
+{
+    using (SqlConnection con = new SqlConnection(CS2))
+    {
+        string strSql = "select * from daccf where LabId = @LabId And MROId = @MROId ";
+        strSql += "  And ccfnumber = @ccfnumber And labdatarcvts is null ";
+        strSql += "  And CreatedTS > @CreatedTS And daccfactive = 1 ";
+        strSql += "  And (CliId = @CliId Or CliId = 25) ";
+
+        SqlCommand cmd = new SqlCommand(strSql, con);
+        cmd.Parameters.Add("@LabId", SqlDbType.Int).Value = LabId;
+        cmd.Parameters.Add("@MROId", SqlDbType.Int).Value = MROId;
+        cmd.Parameters.Add("@ccfnumber", SqlDbType.VarChar).Value = CcfNum;
+        cmd.Parameters.Add("@CreatedTS", SqlDbType.DateTime).Value = DateTime.Now.AddDays(-90);
+        cmd.Parameters.Add("@CliId", SqlDbType.Int).Value = CliId;
+
+        con.Open();
+        SqlDataReader rdr = cmd.ExecuteReader();
+
+        DACCF_Record rec = new DACCF_Record();
+        rec.RecFound = false;
+        while (rdr.Read())
+        {
+            rec.RecFound = true;
+            rec.DACCFId = Convert.ToInt32(rdr["DACCFId"]);
+            rec.MRORcvCCF2TS = rdr["MRORcvCCF2TS"].Equals(DBNull.Value) != null ? Convert.ToDateTime(rdr["MRORcvCCF2TS"]) : DateTime.MinValue;
+            rec.NoFlaws = rdr["NoFlaws"].Equals(DBNull.Value) != null ? Convert.ToInt32(rdr["NoFlaws"]) : 0;
+            rec.NoCollName = rdr["NoCollName"].Equals(DBNull.Value) != null ? Convert.ToInt32(rdr["NoCollName"]) : 0;
+            rec.NoCollSig = rdr["NoCollSig"].Equals(DBNull.Value) != null ? Convert.ToInt32(rdr["NoCollSig"]) : 0;
+            rec.DonorSSN = rdr["NoCollSig"].Equals(DBNull.Value) != null ? Convert.ToInt32(rdr["DonorSSN"]) : 0;
+        }
+        return rec;
+    }
+}
+
+

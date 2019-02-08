@@ -1,0 +1,305 @@
+https://msdn.microsoft.com/en-us/library/gg509017.aspx#SimpleWhereClause
+http://www.linqpad.net/whylinqbeatssql.aspx
+http://www.linqpad.net/MasteringLINQ.aspx
+
+***********************************************************************************
+LINQ follows a lazy evaluation model, 
+which means queries execute not when constructed, but when enumerated. 
+This means you can build up a query in as many steps as you like, and 
+it won't actually hit the server until you eventually start consuming the results.
+***********************************************************************************
+LINQ Explaination - Basic
+
+from p in Employees                     --> 1.Target is Employee(same as foreach)
+from id in Employees.EmployeeID         --> 2.Narrow Target from Target
+where id > 5                            --> 3.if (id > 5) from Narrow Target
+orderby p.LastName                      --> 4.Sort
+select new { p.LastName, p.FirstName }; --> 5.list all matched data list
+
+***********************************************************************************
+LINQ Explaination - Group "Field Lists" By "Group Key" Into "Temp"
+
+from o in Orders
+    group new {o.ShipCountry, o.OrderID, o.Freight, o.ShipName, o.ShipAddress, o.ShipCity} 
+       by o.ShipCountry 
+     into g
+where g.Count() > 1
+select g
+------------Lambda 
+Orders
+   .GroupBy (
+      o => o.ShipCountry, 
+      o => 
+         new  
+         {
+            ShipCountry = o.ShipCountry, 
+            OrderID = o.OrderID, 
+            Freight = o.Freight, 
+            ShipName = o.ShipName, 
+            ShipAddress = o.ShipAddress, 
+            ShipCity = o.ShipCity
+         }
+   )
+   .Where (g => (g.Count () > 1))
+****************
+from o in Orders
+    group new { o.ShipCountry, o.OrderID, o.Freight, o.ShipName, o.ShipAddress, o.ShipCity} 
+       by new { o.ShipCountry, o.ShipCity } 
+     into g
+where g.Count() > 1
+select g
+------------Lambda
+Orders
+   .GroupBy (
+      o => 
+         new  
+         {
+            ShipCountry = o.ShipCountry, 
+            ShipCity = o.ShipCity
+         }, 
+      o => 
+         new  
+         {
+            ShipCountry = o.ShipCountry, 
+            OrderID = o.OrderID, 
+            Freight = o.Freight, 
+            ShipName = o.ShipName, 
+            ShipAddress = o.ShipAddress, 
+            ShipCity = o.ShipCity
+         }
+   )
+   .Where (g => (g.Count () > 1))
+****************
+from o in Orders 
+join s in Shippers on o.ShipVia equals s.ShipperID
+    group new {o.ShipCountry, o.OrderID, o.Freight, o.ShipName, o.ShipVia, s.CompanyName, o.ShipAddress, o.ShipCity} 
+    by new { o.ShipCountry, o.ShipCity } into g
+where g.Count() > 1
+select g
+------------Lambda
+Orders
+   .Join (
+      Shippers, 
+      o => o.ShipVia, 
+      s => (Int32?)(s.ShipperID), 
+      (o, s) => 
+         new  
+         {
+            o = o, 
+            s = s
+         }
+   )
+   .GroupBy (
+      temp0 => 
+         new  
+         {
+            ShipCountry = temp0.o.ShipCountry, 
+            ShipCity = temp0.o.ShipCity
+         }, 
+      temp0 => 
+         new  
+         {
+            ShipCountry = temp0.o.ShipCountry, 
+            OrderID = temp0.o.OrderID, 
+            Freight = temp0.o.Freight, 
+            ShipName = temp0.o.ShipName, 
+            ShipVia = temp0.o.ShipVia, 
+            CompanyName = temp0.s.CompanyName, 
+            ShipAddress = temp0.o.ShipAddress, 
+            ShipCity = temp0.o.ShipCity
+         }
+   )
+   .Where (g => (g.Count () > 1))
+
+***********************************************************************************
+ArrayList strings = new ArrayList(5);
+strings.Add("Icecreams");
+strings.Add("Chocolates");
+strings.Add("Pastries");
+strings.Add(5);
+strings.Add(2.5);
+IEnumerable<string> onlyStrings = strings.OfType<string>(); <-- Get data only 'OfType<string>'
+
+Console.WriteLine("The Elements of type string are :");
+foreach (string str in onlyStrings)
+	Console.WriteLine(str);
+---
+The Elements of type string are :
+    Icecreams   <--only string is displayed
+    Chocolates  <--only string is displayed
+    Pastries    <--only string is displayed
+
+***********************************************************************************
+string[] numbers = {"One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"};
+string reversedOrder = numbers.Aggregate((nums, next) => next + " " + nums);
+Console.WriteLine("Reversed using Aggregate: {0}", reversedOrder); 
+Reversed using Aggregate: Ten Nine Eight Seven Six Five Four Three Two One
+-----------------------------------------------------------------------------------
+int[] numbers = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+var firstFive = numbers.TakeWhile(num => num <= 5);
+foreach (int num in firstFive)
+	Console.WriteLine(num.ToString());
+1
+2
+3
+4
+5
+
+***********************************************************************************
+---LinqPad4---
+string[] people = new [] { "Tom", "Dick", "Harry" };
+var fPeople1 = from p in people where p.Length > 3 select p;	//same
+var fPeople2 = people.Where (p => p.Length > 3);				//same
+var fPeople3 = people.Select (p => new { Name = p, p.Length });
+var fPeople4 = new { Name="Foo", Length=3 };
+fPeople1.Dump();
+fPeople2.Dump();
+fPeople3.Dump();
+fPeople4.Dump();
+---
+from str in strings where str.Length==3 select str;
+---
+
+var list = stringList
+    .Where(s => s.Length == 3)      --> Lambda expression always require "(x => "
+    .Select(s => s);                --> Lambda expression always require "(x => "
+
+----------------------
+Exact match field name: NORTHWND Database: linq & Lambda is mixed
+----------------------
+from p in Products                                                                  --> Linq
+    let spanishOrders = p.OrderDetails.Where(o => o.Order.ShipCountry == "Spain")   --> Lambda
+    where spanishOrders.Any()
+    orderby p.ProductName
+    select new
+    {
+        p.ProductName,
+        p.Category.CategoryName,
+        Orders = spanishOrders.Count(),	
+        TotalValue = spanishOrders.Sum (o => o.UnitPrice * o.Quantity)
+    }
+----------------------LINQ-----
+var aaa = from p in Employees
+          where p.EmployeeID > 5
+          select new { p.EmployeeID, p.LastName, p.FirstName, p.Title };
+aaa.Dump();	
+----------------------Lambda--- --> Lambda expression always require "(x => "
+var bbb = Employees
+		 .Where(p => p.EmployeeID > 5)
+		 .Select(p => new {a = p.EmployeeID, b = p.LastName, p.FirstName,p.Title });
+bbb.Dump();
+-------------------------------
+
+XElement books = XElement.Parse(
+       @"<books>
+            <book>
+                <title>Pro LINQ: Language Integrated Query in C#2010</title>
+                <author>Joe Rattz</author>
+            </book>
+            <book>
+                <title>Pro .NET 4.0 Parallel Programming in C#</title>
+                <author>Adam Freeman</author>
+            </book>
+            <book>
+                <title>Pro VB 2010 and the .NET 4.0 Platform</title>
+                <author>Andrew Troelsen</author>
+            </book>
+        </books>");
+
+//XElement Xbooks = XElement.Parse(@"XMLFile.xml");
+var titles =
+	from book in books.Elements("book")
+	where (string)book.Element("author") == "Joe Rattz"
+	select book.Element("title");
+    
+foreach (var title in titles)
+    Console.WriteLine(title.Value);
+----
+XElement xelement = XElement.Load("..\\..\\Employees.xml");
+var name = from nm in xelement.Elements("Employee")
+           where (string)nm.Element("Sex") == "Female"
+           select nm;
+---           
+string[] numbers = { "0042", "010", "9", "27" };            
+int[] nums = numbers.Select(s => Int32.Parse(s)).OrderBy(s => ).ToArray(); 
+foreach (int num in nums) 
+	Console.WriteLine(num);
+---
+public ActionResult Search(string city)
+{
+	BusinessLayer businessLayer = new BusinessLayer();
+	var employees = businessLayer.Employees.Where(c => c.City.StartsWith(city));
+	return View(employees);
+}
+
+var titles =
+    from b in books.Elements("book")
+    where (string)b.Element("author") == "Joe Rattz"
+    select b.Element("title");
+                
+var titles =
+    from b in books.Elements("book")
+    select new { au = b.Element("author"), ti = b.Element("title") };
+                
+http://localhost:2140/WCFODataService.svc/Employees(1)
+
+var emp = from e in Employees
+        where e.EmployeeID == 1
+        select e;
+emp.Dump();
+
+var ord = from o in Orders
+          where o.EmployeeID == 3
+		  select new { o.OrderID, o.CustomerID, o.EmployeeID, o.OrderDate };
+ord.Dump();
+
+var ord = (from o in Orders
+          where o.EmployeeID == 3
+		  orderby o.OrderID descending
+		  select new { o.OrderID, o.CustomerID, o.EmployeeID, o.OrderDate }
+		  ).Skip(10).Take(10);
+ord.Dump();
+
+var ord = (from o in Orders
+          where o.EmployeeID == 3
+		  orderby o.OrderID descending
+		  select new { o.OrderID, o.CustomerID, o.EmployeeID, o.OrderDate, ShipName = o.ShipName.ToUpper() }
+		  ).Skip(10).Take(10);
+ord.Dump();
+
+
+Orders
+   .Where (o => (o.EmployeeID == (Int32?)3))
+   .OrderByDescending (o => o.OrderID)
+   .Select (
+      o => new {
+            OrderID = o.OrderID, 
+            CustomerID = o.CustomerID, 
+            EmployeeID = o.EmployeeID, 
+            OrderDate = o.OrderDate
+			}
+   )
+   .Skip (10)
+   .Take (10)
+   
+
+Orders
+   .Where (o => (o.EmployeeID == (Int32?)3))
+   .Select (
+      o => new { o.OrderID, o.CustomerID, o.EmployeeID, o.OrderDate }
+   )
+   .Skip (10)
+   .Take (10)
+   
+var ord = (from o in Orders
+          where o.EmployeeID == 3
+		  select select new { o.OrderID, o.CustomerID, o.EmployeeID, o.OrderDate }
+		  ).Take(10);
+ord.Dump();
+http://localhost:2140/WCFODataService.svc/Orders()?$filter=EmployeeID eq 3&$select=OrderID,CustomerID,EmployeeID,OrderDate
+http://localhost:2140/WCFODataService.svc/Orders()?$filter=EmployeeID eq 3&$orderby=OrderID desc&$skip=10&$top=10&$select=OrderID,CustomerID,EmployeeID,OrderDate
+
+
+Employees.Where (e => (e.EmployeeID == 1))
+Orders.Where (o => (o.EmployeeID == 3))
+

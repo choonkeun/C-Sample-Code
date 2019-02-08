@@ -1,0 +1,52 @@
+
+C#: DLL 제작방법과 사용방법
+
+1. DLL 제작하기
+    파일 / 새로만들기 / 프로젝트 -> 클래스 라이브러리 선택
+    FileName: Class1.cs
+    
+    using System;
+    namespace myDLL
+    {
+        public class Calculator
+        {
+              public static int Add(int a, int b){
+                  return a + b;
+              }
+              public static int Sub(int a, int b)
+              {
+                  return a - b;
+              }
+         }
+    }
+    C#은 완벽한 객체지향 언어이므로, 메서드만 단독으로 제공할 수 없다.
+    위처럼 클레스를 통해 클라이언트에게 메서드를 제공하여야만 한다.
+
+    DLL 안에서 외부로 공개하고자 하는 클레스의 액세스 지정자는 반드시 public으로 하여야 한다.
+    액세스 지정자를 public으로 지정해주지 않는다면 자동으로(default) Internal이 적용되는데, 이는 외부에서 엑세스하지 못하도록 한다.
+    이 프로젝트를 컴파일 하면 myDLL.dll 파일이 생성될 것이다.
+    
+    
+2. DLL 사용하기    
+
+    컴파일러는 myDLL 네임스페이스가 어떤 위치에 있는지 모른다.(닷넷에 정의되어 있는 네임스페이스가 아님)
+    왼쪽 그림철머 프로젝트 -> 참조 추가항목을 선택하여 위 소스에서 참조할 myDLL의 위치를 지정해주어야만 한다.
+
+    using System;
+    using myDLL;
+    namespace useDLL
+    {
+        class Program
+        {
+            static void Main()
+            {
+                myDLL.Calculator _myDLL = new myDLL.Calculator();
+                Console.WriteLine("3 + 2 = {0}", _myDLL.Add(3, 2));
+                Console.WriteLine("3 - 2 = {0}", _myDLL.Sub(3, 2));
+                Console.ReadLine();
+            }
+        }
+    }
+
+    
+    

@@ -1,0 +1,151 @@
+
+//--------------------------------------------------------------------------------
+// File.ReadAllLines: returns an array. This array contains a string for each line
+//--------------------------------------------------------------------------------
+
+using System;
+using System.IO;
+
+class A
+{
+    static void Main()
+    {
+        string[] lines = File.ReadAllLines(AppDomain.CurrentDomain.BaseDirectory + @"\config.txt", Encoding.UTF8);
+
+        string file    = File.ReadAllText("C:\\file.txt");          //file into a string
+        string[] lines = File.ReadAllLines(@"C:\file.txt");         //file into a array by lines(10 line = 10 array)
+        int lineCount  = File.ReadAllLines("file.txt").Length;      //line count includes empty line
+        bool exists = (from line in File.ReadAllLines("file.txt")   //See if line exists in a file.
+		       where line == "Some line match"
+		       select line).Count() > 0;
+        byte[] array = File.ReadAllBytes("C:\\a");                  //returns a byte array
+
+        Console.WriteLine("Length: {0}", lines.Length);
+        Console.WriteLine("First: {0}", lines[0]);
+
+        int count = 0;
+        foreach (string line in lines)
+        {
+            count++;
+        }
+
+        int c = 0;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            c++;
+        }
+
+        Console.WriteLine("Count: {0}", count);
+        Console.WriteLine("C: {0}", c);
+        
+        //--------------------------------
+        // Read one line with TextReader.
+        //--------------------------------
+        using (TextReader reader = File.OpenText(@"C:\perl.txt"))
+        {
+            string line = reader.ReadLine();
+            Console.WriteLine(line);
+        }
+        //--------------------------------
+        // Read three text characters with TextReader.
+        //--------------------------------
+        using (TextReader reader = File.OpenText(@"C:\perl.txt"))
+        {
+            char[] block = new char[3];
+            reader.ReadBlock(block, 0, 3);
+            Console.WriteLine(block);
+        }
+        //--------------------------------
+        // Read entire text file with TextReader.
+        //--------------------------------
+        using (TextReader reader = File.OpenText(@"C:\perl.txt"))
+        {
+            string text = reader.ReadToEnd();
+            Console.WriteLine(text.Length);
+        }
+        //--------------------------------
+        // Peek at first character in file with TextReader.
+        //--------------------------------
+        using (TextReader reader = File.OpenText(@"C:\perl.txt"))
+        {
+            char first = (char)reader.Peek();
+            Console.WriteLine(first);
+        }
+
+        //--------------------------------
+        // Write a string array to a file.
+        //--------------------------------
+        string[] stringArray = new string[]
+        {
+            "cat", "dog", "arrow"
+        };
+        File.WriteAllLines("file.txt", stringArray);                //Writes array  into file
+        File.WriteAllText("C:\\perls.txt", "Dot Net Perls");        //Writes string into file
+
+        //--------------------------------
+        // TextWriter
+        //--------------------------------
+        using (TextWriter writer = File.CreateText("C:\\perl.txt"))
+        {
+            writer.WriteLine("First line");     // Write one line.
+            writer.Write("A ");                 // Write two strings.
+            writer.Write(writer.NewLine);       // Write the default newline.("\r\n")
+        }        
+        
+        //--------------------------------
+        // StreamWriter
+        //--------------------------------
+        using (StreamWriter writer = new StreamWriter("important.txt"))
+        {
+            writer.Write("Word ");
+            writer.WriteLine("word 2");
+            writer.WriteLine("Line");
+        }        
+        
+        //--------------------------------
+        // StreamWriter:Create File and Append text
+        //--------------------------------
+        using (StreamWriter writer = new StreamWriter("C:\\log.txt", true))
+        {
+            writer.WriteLine("Important data line 1");      // Write single line to new file.
+        }
+        
+        // Append line to the file.(Create file if not exist)
+        using (StreamWriter writer = new StreamWriter("C:\\log.txt", true))
+        {
+            writer.WriteLine("Line 2");                     // Append line to the file.
+        }
+
+        // Append line to the file.(Create file if not exist)
+        using (StreamWriter writer = File.AppendText(path))
+        {
+            writer.Write(time.ToString("yyyy-MM-dd HH:mm:ss"));
+            writer.Write(" - {0}", remProp.Address);
+            writer.WriteLine(" - {0}", service);
+        }   
+        
+    }
+}
+
+//--------------------------------------------------------------------------------
+// StreamReader: returns an array. This array contains a string for each line
+//--------------------------------------------------------------------------------
+
+using System.IO;
+
+class Program
+{
+    static void Main()
+    {
+	// Read every line in the file.
+	using (StreamReader reader = new StreamReader("file.txt"))
+	{
+	    string line;
+	    while ((line = reader.ReadLine()) != null)
+	    {
+		// Do something with the line.
+		string[] parts = line.Split(',');
+	    }
+	}
+    }
+}

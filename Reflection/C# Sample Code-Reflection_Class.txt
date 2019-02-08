@@ -1,0 +1,65 @@
+
+-----------------------------------------------------
+Get Class information
+=====================================================
+FieldInfo info = typeof(Program).GetField("_field");
+MethodInfo[] methods = typeof(Program).GetMethods();
+PropertyInfo propertyInfo in type.GetProperties();
+-----------------------------------------------------
+
+
+// Get type.
+Type type = typeof(Program);
+
+FieldInfo info = typeof(Program).GetField("_field");
+MethodInfo[] methods = typeof(Program).GetMethods();
+PropertyInfo propertyInfo in type.GetProperties();
+
+// Loop over properties.
+foreach (PropertyInfo propertyInfo in type.GetProperties())
+{
+    // Get name.
+    string name = propertyInfo.Name;
+
+    // Get value on the target instance.
+    object value = propertyInfo.GetValue(programInstance, null);
+
+    // Test value type.
+    if (value is int)
+    {
+        Console.WriteLine("Int: {0} = {1}", name, value);
+    }
+    else if (value is string)
+    {
+        Console.WriteLine("String: {0} = {1}", name, value);
+    }
+}
+
+Type type = typeof(Rectangle);
+         
+//iterating through the attribtues of the Rectangle class
+foreach (Object attributes in type.GetCustomAttributes(false)) {
+    DeBugInfo dbi = (DeBugInfo)attributes;
+    if (null != dbi) {
+       Console.WriteLine("Bug no: {0}", dbi.BugNo);
+       Console.WriteLine("Developer: {0}", dbi.Developer);
+       Console.WriteLine("Last Reviewed: {0}", dbi.LastReview);
+       Console.WriteLine("Remarks: {0}", dbi.Message);
+    }
+}
+
+//iterating through the method attribtues
+foreach (MethodInfo m in type.GetMethods()) {
+    foreach (Attribute a in m.GetCustomAttributes(true)) {
+       DeBugInfo dbi = (DeBugInfo)a;
+       
+       if (null != dbi) {
+          Console.WriteLine("Bug no: {0}, for Method: {1}", dbi.BugNo, m.Name);
+          Console.WriteLine("Developer: {0}", dbi.Developer);
+          Console.WriteLine("Last Reviewed: {0}", dbi.LastReview);
+          Console.WriteLine("Remarks: {0}", dbi.Message);
+       }
+    }
+}
+
+---

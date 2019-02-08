@@ -1,0 +1,93 @@
+
+----------------------------------------------
+Using HTTP Module to Authenticate Users in WCF
+----------------------------------------------
+http://www.damirscorner.com/blog/posts/20111212-UsingHttpModuleToAuthenticateUsersInWcf.html
+http://www.damirscorner.com/blog/posts/20111219-UsingHttpModuleToAuthenticateUsersInWcfPart2WindowsAuthentication.html
+
+
+public class HttpAuthenticationModule : IHttpModule
+{
+    public void Dispose()
+    { }
+
+    public void Init(HttpApplication context)
+    {
+        context.AuthenticateRequest += context_AuthenticateRequest;
+    }
+
+    void context_AuthenticateRequest(object sender, EventArgs e)
+    {
+        HttpContext.Current.User = ProcessAuthentication();
+    }
+
+    private static IPrincipal ProcessAuthentication()
+    {
+        // implement your authentication here
+        IIdentity identity = new GenericIdentity("Authenticated User");
+        return new GenericPrincipal(identity), null);
+    }
+}
+
+public string GetUser()
+{
+    if (ServiceSecurityContext.Current != null)
+        return ServiceSecurityContext.Current.PrimaryIdentity.Name;
+    else
+        return null;
+}
+
+public class HttpContextAuthorizationPolicy : IAuthorizationPolicy
+{
+    public bool Evaluate(EvaluationContext evaluationContext, ref object state)
+    {
+        HttpContext context = HttpContext.Current;
+
+        if (context != null)
+        {
+            evaluationContext.Properties["Principal"] = context.User;
+            evaluationContext.Properties["Identities"] = new List<IIdentity>() 
+            { 
+                context.User.Identity 
+            };
+        }
+
+        return true;
+    }
+
+    public System.IdentityModel.Claims.ClaimSet Issuer
+    {
+        get { return ClaimSet.System; }
+    }
+
+    public string Id
+    {
+        get { return "HttpContextAuthorizationPolicy"; }
+    }
+}
+
+
+
+web.config
+----------
+<system.webServer>
+    <!-- ... -->
+    <modules>
+        <add name="HttpAuthenticationModule" 
+             type="WcfAuthentication.HttpAuthenticationModule"/>
+    </modules>
+</system.webServer>
+or
+<system.web>
+    <!-- ... -->
+    <httpModules>
+        <add name="HttpAuthenticationModule" 
+             type="WcfAuthentication.HttpAuthenticationModule"/>
+    </httpModules>
+</system.web>
+
+
+
+
+
+

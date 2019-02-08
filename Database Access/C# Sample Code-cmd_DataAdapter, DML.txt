@@ -1,0 +1,218 @@
+    
+    //1-1. return DataTable
+    public DataTable GetDataTable(string conStr, SqlCommand cmd)
+    {
+        using (SqlConnection con = new SqlConnection(conStr))
+        {
+            DataTable dt = new DataTable();
+            using (SqlDataAdapter da = new SqlDataAdapter())
+            {
+                cmd.Connection = con;
+                con.Open();
+                da.SelectCommand = cmd;
+                try
+                {
+                    da.Fill(dt);
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }    
+                finally
+                {
+                    cmd.Parameters.Clear();
+                    cmd.Dispose();
+                }
+                return dt;
+            }
+        }
+    }
+    
+    
+    //1-2. return DataSet
+    public DataSet GetDataSet(string conStr, SqlCommand cmd)
+    {
+        using (SqlConnection con = new SqlConnection(conStr))
+        {
+            DataSet ds = new DataSet();
+            using (SqlDataAdapter da = new SqlDataAdapter())
+            {
+                cmd.Connection = con;
+                con.Open();
+                da.SelectCommand = cmd;
+                try
+                {
+                    da.Fill(ds);
+                }
+                catch (Exception ex)
+                {
+                    throw (ex);
+                }    
+                finally
+                {
+                    cmd.Parameters.Clear();
+                    cmd.Dispose();
+                }
+                return ds;
+            }
+        }
+    }
+    
+    
+    //2. ExecuteNonQuery: INSERT, UPDATE, DELETE
+	public static int ExecuteCommand(string conStr, SqlCommand cmd)
+	{
+		int cnt = 0;
+		using (SqlConnection con = new SqlConnection(conStr))
+		{
+			try
+			{
+				cmd.Connection = con;
+				con.Open();
+				cmd.Transaction = con.BeginTransaction();
+				cnt = cmd.ExecuteNonQuery();        //The number of rows affected
+			}
+			catch (Exception ex)
+			{
+				cmd.Transaction.Rollback();
+				Repository.Append_log(ex.Message);
+				//throw (ex);
+			}
+			finally
+			{
+				cmd.Transaction.Commit();
+				cmd.Parameters.Clear();
+				cmd.Dispose();
+				con.Close();
+			}
+			return cnt;
+		}
+	}
+----------------------------------------------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+
+namespace DAL
+{
+    public class PersonDAL
+    {
+        static string _connStr = ConfigurationManager.ConnectionStrings["ConnectionString"].ConnectionString;
+
+        //Usage: new PersonDAL().Insert(firstName, lastName, age);
+        public int Insert(string firstName, string lastName, int age)
+        {
+            var returnValue = 0;
+            using (SqlConnection conn = new SqlConnection(_connStr))
+            {
+                using (SqlCommand dCmd = new SqlCommand("InsertPerson", conn))
+                {
+                    dCmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter[] prms = new SqlParameter[3];
+                    prms[0] = new SqlParameter("@FirstName", SqlDbType.VarChar, 50);
+                    prms[0].Value = firstName;
+                    prms[1] = new SqlParameter("@LastName", SqlDbType.VarChar, 50);
+                    prms[1].Value = lastName;
+                    prms[2] = new SqlParameter("@Age", SqlDbType.Int);
+                    prms[2].Value = age;
+
+                    dCmd.Parameters.AddRange(prms);
+
+                    conn.Open();
+                    returnValue = dCmd.ExecuteNonQuery();
+                    conn.Close();
+                }
+            }
+            return returnValue;
+        }
+
+        public int Update(int autoId, string firstName, string lastName, int age)
+        {
+            var returnValue = 0;
+            using (SqlConnection conn = new SqlConnection(_connStr))
+            {
+                using (SqlCommand dCmd = new SqlCommand("UpdatePerson", conn))
+                {
+                    dCmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter[] prms = new SqlParameter[4];
+                    prms[0] = new SqlParameter("@FirstName", SqlDbType.VarChar, 50);
+                    prms[0].Value = firstName;
+                    prms[1] = new SqlParameter("@LastName", SqlDbType.VarChar, 50);
+                    prms[1].Value = lastName;
+                    prms[2] = new SqlParameter("@Age", SqlDbType.Int);
+                    prms[2].Value = age;
+                    prms[3] = new SqlParameter("@AutoId", SqlDbType.Int);
+                    prms[3].Value = autoId;
+
+                    dCmd.Parameters.AddRange(prms);
+
+                    conn.Open();
+                    returnValue = dCmd.ExecuteNonQuery();
+                    conn.Close();
+                }
+            }
+            return returnValue;
+        }
+        
+        //Usage: new PersonDAL().Delete(autoId);
+        public int Delete(int autoId)
+        {
+            var returnValue = 0;
+            using (SqlConnection conn = new SqlConnection(_connStr))
+            {
+                using (SqlCommand dCmd = new SqlCommand("DeletePerson", conn))
+                {
+                    dCmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter prm = new SqlParameter("@AutoId", SqlDbType.Int);
+                    prm.Value = autoId;
+
+                    dCmd.Parameters.Add(prm);
+
+                    conn.Open();
+                    returnValue = dCmd.ExecuteNonQuery();
+                    conn.Close();
+                }
+            }
+            return returnValue;
+        }
+
+        //Usage: DataTable table = new PersonDAL().LoadAll();
+        public DataTable LoadAll()
+        {
+            DataTable table = new DataTable();
+            using (SqlConnection conn = new SqlConnection(_connStr))
+            {
+                using (SqlDataAdapter ad = new SqlDataAdapter("LoadAll", conn))
+                {
+                    ad.SelectCommand.CommandType = CommandType.StoredProcedure;
+                    ad.Fill(table);
+                }
+            }
+            return table;
+        }
+
+        public DataTable Load(int autoId)
+        {
+            DataTable table = new DataTable();
+            using (SqlConnection conn = new SqlConnection(_connStr))
+            {
+                using (SqlDataAdapter ad = new SqlDataAdapter("LoadPerson", conn))
+                {
+                    ad.SelectCommand.CommandType = CommandType.StoredProcedure;
+                    SqlParameter prm = new SqlParameter("@AutoId", SqlDbType.Int);
+                    prm.Value = autoId;
+                    ad.SelectCommand.Parameters.Add(prm);
+
+                    ad.Fill(table);
+                }
+            }
+            return table;
+        }
+
+    }
+}
+    
+    

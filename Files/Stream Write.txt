@@ -1,0 +1,24 @@
+    //TEST --- Working
+    
+    List<byte[]> chunkBlock = new List<byte[]>();       //chunk Bloct List
+
+    byte[] myByteArray = new byte[] { 0x7e, 0x0d, 0x0a };
+    MemoryStream stream = new MemoryStream();
+    stream.Write(myByteArray, 0, myByteArray.Length);
+
+    byte[] myByteArray2 = new byte[] { 0x7e, 0x0d, 0x0a };
+    stream.Write(myByteArray2, 0, myByteArray2.Length);         //stream has pointer to write
+
+    stream.Seek(0, SeekOrigin.Begin);       //set point to start
+
+    byte[] readChunk = new byte[stream.Length];
+    using (BinaryReader reader = new BinaryReader(stream))
+    {
+        for (int i = 0; i < stream.Length; i++)
+        {
+            readChunk[i] = reader.ReadByte();
+        }
+    }
+    chunkBlock.Add(readChunk);  //chunkBlock has 1 element and the element has 6 bytes
+
+    //TEST --- Working

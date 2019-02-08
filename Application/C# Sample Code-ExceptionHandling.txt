@@ -1,0 +1,34 @@
+
+http://stackoverflow.com/questions/10552751/how-to-catch-an-unhandled-exception-in-c
+
+------------
+Use log4net 
+------------
+
+
+[STAThread]
+static void Main()
+{
+    log.Info("Starting deployer application");
+
+    Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
+    AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+    Application.ApplicationExit += new EventHandler(Application_ApplicationExit);
+
+    Application.Run(ConnectionForm.GetInstance);
+}
+
+static void Application_ApplicationExit(object sender, EventArgs e)
+{
+    log.Info("Application Closed");
+}
+
+static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+{
+    log.Error(string.Format("*** UNHANDLED APPDOMAIN EXCEPTION ({0}) *****", e.IsTerminating ? "Terminating" : "Non-Terminating"), e.ExceptionObject as Exception);
+}
+
+static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
+{
+    log.Error("*** UNHANDLED THREAD EXCEPTION *****", e.Exception);
+}

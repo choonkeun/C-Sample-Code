@@ -1,0 +1,88 @@
+https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-builders
+
+using System.Data.OleDb;
+using (OleDbConnection con = new OleDbConnection(conStr))
+{
+    con.Open();
+    OleDbCommand cmd = new OleDbCommand(strSql, con);
+    OleDbDataReader rdr = cmd.ExecuteReader();
+    if (rdr.HasRows)
+    {
+        while (rdr.Read())
+---
+using System.Data;
+using Microsoft.Data.Odbc;
+
+    //string conStr = ConfigurationManager.ConnectionStrings["ConnString"].ConnectionString;
+    //string conStr = "Driver={SQL Server};Server=192.168.6.210;Database=OEVS;UID=sa;PWD=4ow7v6f";
+    string conStr = "DSN=OEVS;UID=sa;PWD=4ow7v6f";
+
+    using (OdbcConnection con = new OdbcConnection(conStr))
+    {
+        OdbcCommand cmd = new OdbcCommand(strSql, con);
+        con.Open();
+        OdbcDataReader rdr = cmd.ExecuteReader();
+        if (rdr.FieldCount > 0)
+        {
+            while (rdr.Read())
+            {
+---parameter
+    using (OdbcConnection con = new OdbcConnection(conStr))
+    {
+        string strSql = "select * from oevs.dbo.UsrReportsMsgs where UsrRepMsgId = ?";
+        OdbcCommand cmd = new OdbcCommand(strSql, con);
+        cmd.Parameters.Add("?Param1", OdbcType.Int).Value = key;
+        con.Open();
+        OdbcDataReader rdr = cmd.ExecuteReader();
+        if (rdr.Read())
+        {
+---
+    //<add name="SqlServerConnection" 
+    //connectionString="data source=(LocalDB)\v11.0;AttachDbFilename=|DataDirectory|\NORTHWND.MDF;Integrated Security=True;" 
+    //providerName="System.Data.SqlClient" />
+
+    //Way 1 - read app.config
+    //AppDomain.CurrentDomain.SetData("DataDirectory", @"D:\TEST\BL_WCF_WS_Factory\BL_WCF_WS_Factory\App_Data");
+    //string ConnectionString = ConfigurationManager.ConnectionStrings["SqlServerConnection"].ToString();
+    //_Connection = new SqlConnection(ConnectionString);
+
+    //Way 2 - SqlConnectionStringBuilder
+    string path = AppDomain.CurrentDomain.BaseDirectory + @"App_Data";
+    AppDomain.CurrentDomain.SetData("DataDirectory", path);
+
+    SqlConnectionStringBuilder builder = new System.Data.SqlClient.SqlConnectionStringBuilder();
+    //builder.UserID = "sa";
+    //builder.Password = "admin@123";
+    //builder.InitialCatalog = "NORTHWND";
+    builder.DataSource = @"(LocalDB)\v11.0";
+    builder.AttachDBFilename = @"|DataDirectory|\NORTHWND.MDF";
+    builder.IntegratedSecurity = true;
+    builder.ConnectTimeout = 30;
+    _Connection = new SqlConnection(builder.ConnectionString);
+    
+---
+    //<add name="AccessOleConnection" 
+    //connectionString="Provider=Microsoft.ACE.OLEDB.12.0;OLE DB Services=-4;Data Source=|DataDirectory|\NORTHWND.accdb;Persist Security Info=False;" 
+    //providerName="System.Data.OleDb" />
+
+    //Way 1 - read app.config
+    //Provider=Microsoft.ACE.OLEDB.12.0;OLE DB Services=-4;Data Source=|DataDirectory|\NORTHWND.accdb;Persist Security Info=False;
+    //string ConnectionString = ConfigurationManager.ConnectionStrings["AccessOleConnection"].ToString();
+    //_Connection = new OleDbConnection(ConnectionString);
+
+    //Way 2 - OleDbConnectionStringBuilder
+    string path = AppDomain.CurrentDomain.BaseDirectory + @"App_Data\NORTHWND.accdb;";
+    OleDbConnectionStringBuilder builder = new System.Data.OleDb.OleDbConnectionStringBuilder();
+    builder["Provider"] = "Microsoft.ACE.OLEDB.12.0;OLE DB Services=-4;";
+    //builder["Provider"] = "Microsoft.ACE.OLEDB.12.0;";
+    builder["Data Source"] = path;
+    builder["Persist Security Info"] = "False";
+    Console.WriteLine(builder.ConnectionString);
+    _Connection = new OleDbConnection(builder.ConnectionString);
+    
+---
+    //<add name="ExcelOleConnection" 
+    //connectionString="Provider=Microsoft.Jet.OLEDB.12.0;Data Source=c:\myFolder\myOldExcelFile.xlsx;Extended Properties='Excel 12.0 Xml;HDR=YES';" 
+    //providerName="System.Data.OleDb" />
+    
+    

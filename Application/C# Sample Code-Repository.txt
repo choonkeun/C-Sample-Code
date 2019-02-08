@@ -1,0 +1,193 @@
+
+=======================
+How to use "Repository" 
+=======================
+: 주로 무엇인가의 Data를 저장하고 사용하기 위한 경우에 사용하면 이 Module을 수정하더라도 다른 Source Program에 영향을 미치지 않는다
+: Ex 1) Folder에 있는 File List를 List<>에 저장한다음 여기에 CRUD작업을 할 경우
+: Ex 2) Database의 Table에 대하여 CRUD작업을 할 경우(Enterty Framwork를 사용하는 ADO / SQLClient를 사용하든 관계없다) 
+
+-----------------------
+SendResultController.cs
+-----------------------
+using System;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.IO;
+using System.Xml;
+using System.Windows.Forms;
+using System.Data;
+using System.Globalization;
+
+namespace LabCorpParse
+{
+    public class SendResultController
+    {
+        static readonly IFileStayRepository repository = new FileStayRepository();
+        public class 
+
+        public int CreateResult(string FullFileName)
+        {
+            string CS = ConfigurationManager.ConnectionStrings["DBCS1"].ConnectionString;
+            string fileString = string.Empty;
+            fileString = File.ReadAllText(FullFileName); 
+			
+			string tmp = Path.GetFileName(repository.GetFullFileNameByIndex(i)) + Environment.NewLine;
+            int count = repository.GetCount(sourceFolder);
+			repository.Append_log(ex.Message, false);
+		}
+		
+        private void GetFolderFiles(string folder)
+        {
+            Boolean yesNo;
+            try
+            {
+                repository.RemoveAll(folder);
+
+                //DirectoryInfo info = new DirectoryInfo(folder);
+                FileInfo[] filePaths = new DirectoryInfo(folder).GetFiles("*.txt");
+                foreach (var file in filePaths)
+                {
+                    yesNo = IsSendResult(file.FullName);
+                    if (yesNo)
+                    {
+                        FileList fl = new FileList();
+                        fl.FullFileName = file.FullName;
+                        fl.FolderPath = file.DirectoryName;
+                        fl.FileName = file.Name;
+                        fl.FileSize = file.Length;
+                        fl.Created = file.CreationTime;
+                        repository.Add(fl);
+                        repository.Append_log("Folder " + folder + ": Existing file: " + fl.FileName, true);
+                    }
+                }
+                ShowWaitingList();
+            }
+            catch (Exception ex)
+            {
+                string error_folder = ex.Message;
+                MessageBox.Show("Folder" + folder + " : " + error_folder);
+            }
+        }
+	}
+}
+
+-----------------------
+FileStayRepository.cs
+-----------------------
+using System;
+using System.IO;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace LabCorpParse
+{
+    public class FileList
+    {
+        public String FullFileName;
+        public String FolderPath;
+        public String FileName;
+        public long FileSize;
+        public DateTime Created;
+    }
+    
+    interface IFileStayRepository
+    {
+        int GetCount(string hotFolder);                 //GET file count for same FolderPath
+        FileList Get(string filename);                  //GET 
+        int GetListCount();                             //GET List count
+        string GetFullFileNameByIndex(int index);       //GET 
+        FileList Add(FileList item);                    //POST
+        bool Update(FileList item);                     //PUT
+        void Remove(string filename);                   //DELETE
+        void RemoveAll(string hotFolder);               //DELETE ALL files for same FolderPath
+        void RemoveBlank();                             //DELETE ALL blank item in List
+        void Append_log(string message, Boolean newLine);   //Append_log
+    }
+
+    public class FileStayRepository : IFileStayRepository
+    {
+        private List<FileList> fileList = new List<FileList>();
+
+        public int GetCount(string hotFolder)
+        {
+            return fileList.Count(i => i.FolderPath == hotFolder);
+        }
+        public int GetListCount()
+        {
+            return fileList.Count;
+        }
+
+
+        public FileList Get(string filename)
+        {
+            return fileList.Find(p => p.FileName == filename);      //one record
+        }
+
+        public string GetFullFileNameByIndex(int index)
+        {
+            return fileList.ElementAt(index).FolderPath + @"\" + fileList.ElementAt(index).FileName;
+        }
+
+        public FileList Add(FileList item)
+        {
+            if (item == null)
+            {
+                throw new ArgumentNullException("item");
+            }
+            fileList.Add(item);
+            return item;
+        }
+
+        public bool Update(FileList item)
+        {
+            if (item == null)
+            {
+                throw new ArgumentNullException("item");
+            }
+            int index = fileList.FindIndex(p => p.FileName == item.FileName);
+            if (index == -1)
+            {
+                return false;
+            }
+            fileList.RemoveAt(index);
+            fileList.Add(item);
+            return true;
+        }
+
+        public void Remove(string filename)
+        {
+            var itemToRemove = fileList.SingleOrDefault(p => p.FileName == filename);
+            if (itemToRemove != null)
+            {
+                fileList.Remove(itemToRemove);
+            }
+            //list.RemoveAll(item => item == 2);  remove all list item where item == 2
+        }
+
+        public void RemoveAll(string hotFolder)
+        {
+            fileList.RemoveAll(i => i.FolderPath == hotFolder);
+        }
+
+        public void RemoveBlank()
+        {
+            fileList.RemoveAll(r => String.IsNullOrEmpty(r.FileName.Trim()));
+        }
+        public void Append_log(string message, Boolean newLine)
+        {
+            string appFolder = AppDomain.CurrentDomain.BaseDirectory;
+            string logFile = appFolder + @"\Log_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt";
+            using (StreamWriter writer = new StreamWriter(logFile, true))
+            {
+                if (newLine)
+                {
+                    writer.Write("\r\n");
+                    writer.Write(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " - " + message);
+                }
+                else
+                    writer.Write(message);      //write into same line w/o "\r\n"
+            }
+        }
+
+    }
+}

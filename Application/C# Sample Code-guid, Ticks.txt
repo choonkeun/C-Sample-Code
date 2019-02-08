@@ -1,0 +1,44 @@
+Guid g0 = System.Guid.NewGuid().ToString("D");
+Guid g1 = Guid.NewGuid(); //Get a Guid without any control over the contents
+Guid g2 = new Guid(new string('A',32)); //Get a Guid where all digits == 'A'
+
+"N" - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (32 digits)
+"D" - xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (32 digits separated by hyphens)
+"B" - {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx} (same as "D" with addition of braces)
+"P" - (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) (same as "D" with addition of parentheses)
+"X" - {0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}
+---
+
+------------------------------------------------------------------------
+Calculates total Ticks or miliseconds or seconds and change it to string
+------------------------------------------------------------------------
+public static string TickIdGet(bool getSecondsNotTicks, bool getMillisecondsNotTicks, bool getHexValue)
+{
+    string id = string.Empty;
+
+    DateTime historicalDate = new DateTime(1970, 1, 1, 0, 0, 0);
+
+    if (getSecondsNotTicks || getMillisecondsNotTicks)
+    {
+        TimeSpan spanTillNow = DateTime.UtcNow.Subtract(historicalDate);
+
+        if (getSecondsNotTicks)
+            id = String.Format("{0:0}", spanTillNow.TotalSeconds);
+        else
+            id = String.Format("{0:0}", spanTillNow.TotalMilliseconds);
+    }
+    else
+    {
+        long ticksTillNow = DateTime.UtcNow.Ticks - historicalDate.Ticks;
+        id = ticksTillNow.ToString();
+    }
+
+    if (getHexValue)
+        id = long.Parse(id).ToString("X");
+
+    return id;
+}
+---
+Random r = new Random();
+Console.WriteLine(r.Next(5, 10));       //between 5    and 10 value
+Console.WriteLine(r.Next(1000, 1999));  //between 1000 and 1999 value

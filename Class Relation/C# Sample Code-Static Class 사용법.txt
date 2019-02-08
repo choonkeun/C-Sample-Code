@@ -1,0 +1,209 @@
+
+===Caller Usage===
+            //instance MCPLabData.Models.Codes class --- non static class
+            //Codes code = new Codes();
+
+            //Validation
+            SendCOC_ERROR sendCOC_ERROR = new SendCOC_ERROR();
+            if (sendCOC.userId.Length == 0 || sendCOC.password.Length == 0) 
+            {
+                sendCOC_ERROR.errorCode = 13;
+                sendCOC_ERROR.errorDescription = Codes.GetCodes(sendCOC_ERROR.errorCode);
+                return Request.CreateResponse(HttpStatusCode.BadRequest, sendCOC_ERROR);
+            }
+            if (sendCOC.accountNumber.Length == 0 || sendCOC.specimenId.Length == 0 || sendCOC.coc.Length == 0)
+            {
+                sendCOC_ERROR.errorCode = 2;
+                sendCOC_ERROR.errorDescription = Codes.GetCodes(sendCOC_ERROR.errorCode);
+                return Request.CreateResponse(HttpStatusCode.BadRequest, sendCOC_ERROR);
+            }
+            if (sendCOC.labcorpRegistrationNumber == -1)
+            {
+                sendCOC_ERROR.errorCode = 6;
+                sendCOC_ERROR.errorDescription = Codes.GetCodes(sendCOC_ERROR.errorCode);
+                return Request.CreateResponse(HttpStatusCode.BadRequest, sendCOC_ERROR);
+            }
+
+            SendCOC_Response sendCOC_Response = new SendCOC_Response();
+            sendCOC_Response.status = "O.K";
+            return Request.CreateResponse(HttpStatusCode.OK, sendCOC_Response);
+
+
+===Static Class===
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Serialization;
+
+namespace MCPLabData.Models
+{
+    //DataContractSerializer (default in MVC 4 RC)
+    //[DataContract(Name = "students", ItemName = "person")]
+
+    //XmlSerializer
+    [XmlRoot(ElementName = "ErrorCodes")]
+    public class ErrorCodes
+    {
+        public int Code { get; set; }
+        public string Description { get; set; }
+    }
+    //XmlSerializer
+    [XmlRoot(ElementName = "StateCodes")]
+    public class StateCodes
+    {
+        public string StateCode { get; set; }
+        public string Meaning { get; set; }
+    }
+
+    /// <summary>
+    /// static common codes class
+    /// </summary>
+    /// 
+    public class Codes
+    {
+        //---static
+        public static string GetCodes(int item)
+        {
+            string description = null;
+            try
+            {
+                //NullException when not found
+                description = errorCodes.FirstOrDefault(code => code.Code == item).Description;
+            }
+            catch (Exception)
+            {
+                description = "error: code not found.";
+            }
+            return description;
+        }
+
+        public static string GetStates(string item)
+        {
+            string stateName = null;
+            try
+            {
+                //NullException when not found
+                stateName = stateCodes.FirstOrDefault(code => code.StateCode == item).Meaning;
+            }
+            catch (Exception)
+            {
+                stateName = "error: state not found.";
+            }
+            return stateName;
+        }
+
+        /// <summary>
+        /// initialize code List<>
+        /// </summary>
+        
+        //---static local variable in this class
+        public static List<ErrorCodes> errorCodes { get; set; }
+        public static List<StateCodes> stateCodes { get; set; }
+
+        //---Static constructor
+        static Codes()
+        {
+            Reset();
+            Initialize();
+        }
+        
+        //---access static variable in this class
+        public static void Reset()
+        {
+            errorCodes = new List<ErrorCodes>();
+            stateCodes = new List<StateCodes>();
+        }
+        
+        //---access static variable in this class
+        public static void Initialize()
+        {
+            errorCodes = new List<ErrorCodes>()
+            {
+                new ErrorCodes() { Code = 1,  Description = "Invalid data" },
+                new ErrorCodes() { Code = 1,  Description = "Invalid data" },
+                new ErrorCodes() { Code = 2,  Description = "Required field is missing" },
+                new ErrorCodes() { Code = 3,  Description = "Field is not applicable for the account" },
+                new ErrorCodes() { Code = 4,  Description = "Account does not exist" },
+                new ErrorCodes() { Code = 5,  Description = "Registration does not exist" },
+                new ErrorCodes() { Code = 6,  Description = "Invalid data format" },
+                new ErrorCodes() { Code = 7,  Description = "System error" },
+                new ErrorCodes() { Code = 8,  Description = "Collection initiated" },
+                new ErrorCodes() { Code = 9,  Description = "Password Expired" },
+                new ErrorCodes() { Code = 10, Description = "Invalid Location Code" },
+                new ErrorCodes() { Code = 11, Description = "Not Found" },
+                new ErrorCodes() { Code = 12, Description = "Not Authorized" },
+                new ErrorCodes() { Code = 13, Description = "Invalid User Id or Password" },
+                new ErrorCodes() { Code = 14, Description = "The new password entered does not meet password standards" },
+                new ErrorCodes() { Code = 15, Description = "Not a Web Service user" },
+                new ErrorCodes() { Code = 16, Description = "Not yet sent" } 
+            };
+
+            stateCodes = new List<StateCodes>()
+            {
+                new StateCodes() { StateCode = "AB", Meaning = "Alberta (Canada)" },
+                new StateCodes() { StateCode = "AK", Meaning = "Alaska" },
+                new StateCodes() { StateCode = "AL", Meaning = "Alabama" },
+                new StateCodes() { StateCode = "AR", Meaning = "Arkansas" },
+                new StateCodes() { StateCode = "AZ", Meaning = "Arizona" },
+                new StateCodes() { StateCode = "BC", Meaning = "British Columbia (Canada)" },
+                new StateCodes() { StateCode = "CA", Meaning = "California" },
+                new StateCodes() { StateCode = "CO", Meaning = "Colorado" },
+                new StateCodes() { StateCode = "CT", Meaning = "Connecticut" },
+                new StateCodes() { StateCode = "DC", Meaning = "District of Columbia" },
+                new StateCodes() { StateCode = "DE", Meaning = "Delaware" },
+                new StateCodes() { StateCode = "FL", Meaning = "Florida" },
+                new StateCodes() { StateCode = "GA", Meaning = "Georgia" },
+                new StateCodes() { StateCode = "GU", Meaning = "Guam" },
+                new StateCodes() { StateCode = "HI", Meaning = "Hawaii" },
+                new StateCodes() { StateCode = "IA", Meaning = "Iowa" },
+                new StateCodes() { StateCode = "ID", Meaning = "Idaho" },
+                new StateCodes() { StateCode = "IL", Meaning = "Illinois" },
+                new StateCodes() { StateCode = "IN", Meaning = "Indiana" },
+                new StateCodes() { StateCode = "KS", Meaning = "Kansas" },
+                new StateCodes() { StateCode = "KY", Meaning = "Kentucky" },
+                new StateCodes() { StateCode = "LA", Meaning = "Louisiana" },
+                new StateCodes() { StateCode = "MA", Meaning = "Massachusetts" },
+                new StateCodes() { StateCode = "MB", Meaning = "Manitoba (Canada)" },
+                new StateCodes() { StateCode = "MD", Meaning = "Maryland" },
+                new StateCodes() { StateCode = "ME", Meaning = "Maine" },
+                new StateCodes() { StateCode = "MI", Meaning = "Michigan" },
+                new StateCodes() { StateCode = "MN", Meaning = "Minnesota" },
+                new StateCodes() { StateCode = "MO", Meaning = "Missouri" },
+                new StateCodes() { StateCode = "MS", Meaning = "Mississippi" },
+                new StateCodes() { StateCode = "MT", Meaning = "Montana" },
+                new StateCodes() { StateCode = "NB", Meaning = "New Brunswick (Canada)" },
+                new StateCodes() { StateCode = "NC", Meaning = "North Carolina" },
+                new StateCodes() { StateCode = "ND", Meaning = "North Dakota" },
+                new StateCodes() { StateCode = "NE", Meaning = "Nebraska" },
+                new StateCodes() { StateCode = "NH", Meaning = "New Hampshire" },
+                new StateCodes() { StateCode = "NJ", Meaning = "New Jersey" },
+                new StateCodes() { StateCode = "NM", Meaning = "New Mexico" },
+                new StateCodes() { StateCode = "NS", Meaning = "Nova Scotia (Canada)" },
+                new StateCodes() { StateCode = "NV", Meaning = "Nevada" },
+                new StateCodes() { StateCode = "NY", Meaning = "New York" },
+                new StateCodes() { StateCode = "OH", Meaning = "Ohio" },
+                new StateCodes() { StateCode = "OK", Meaning = "Oklahoma" },
+                new StateCodes() { StateCode = "ON", Meaning = "Ontario (Canada)" },
+                new StateCodes() { StateCode = "OR", Meaning = "Oregon" },
+                new StateCodes() { StateCode = "PA", Meaning = "Pennsylvania" },
+                new StateCodes() { StateCode = "PR", Meaning = "Puerto Rico" },
+                new StateCodes() { StateCode = "QC", Meaning = "Quebec (Canada)" },
+                new StateCodes() { StateCode = "RI", Meaning = "Rhode Island" },
+                new StateCodes() { StateCode = "SC", Meaning = "South Carolina" },
+                new StateCodes() { StateCode = "SD", Meaning = "South Dakota" },
+                new StateCodes() { StateCode = "SK", Meaning = "Saskatchewan (Canada)" },
+                new StateCodes() { StateCode = "TN", Meaning = "Tennessee" },
+                new StateCodes() { StateCode = "TX", Meaning = "Texas" },
+                new StateCodes() { StateCode = "UT", Meaning = "Utah" },
+                new StateCodes() { StateCode = "VA", Meaning = "Virginia" },
+                new StateCodes() { StateCode = "VT", Meaning = "Vermont" },
+                new StateCodes() { StateCode = "WA", Meaning = "Washington" },
+                new StateCodes() { StateCode = "WI", Meaning = "Wisconsin" },
+                new StateCodes() { StateCode = "WV", Meaning = "West Virginia" },
+                new StateCodes() { StateCode = "WY", Meaning = "Wyoming" }
+            };
+
+        }
+
+    }
+}

@@ -1,0 +1,49 @@
+
+---------------------------------------------
+DLL name is namespace.class -> testdll.Class1, sum is method
+---------------------------------------------
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+ 
+namespace testdll
+{
+    public class Class1
+    {
+        public int sum(int a, int b)
+        {
+            return a + b;
+        }
+    }
+} 
+
+
+---------------------------------------------
+Main Program 
+---------------------------------------------
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Reflection;
+ 
+namespace test
+{
+    class Program
+    {
+        static void Main (string[] args)
+        {
+            Assembly myassembly = Assembly.LoadFrom("testdll.dll");
+            Type type = myassembly.GetType("testdll.Class1");
+            
+            object instance = Activator.Createinstance(type);
+ 
+            MethodInfo[] methods = type.GetMethods();       //methods[0] = sum
+            object res = methods[0].Invoke(instance, new object[] {5, 3});
+            
+            Console.WriteLine(res.ToString());
+            Console.ReadLine();
+        }
+    }
+}

@@ -1,0 +1,28 @@
+
+//---------------------------------------
+// Check Registry
+//---------------------------------------
+
+using Microsoft.Win32;          //Registry Access
+
+    //string keyName = @"HKEY_CURRENT_USER\Software\MCPComputers";
+    RegistryKey registryKey = Registry.CurrentUser.OpenSubKey(@"Software\MCPComputers");
+
+    //if (string.IsNullOrEmpty(registryKey) == true)
+    if (registryKey == null)
+    {
+        //--- Create Registry ---
+        uservalue = "";
+        passvalue = "";
+        Microsoft.Win32.RegistryKey key;
+        key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("SOFTWARE\\MCPComputers\\");
+        key.SetValue("Username", uservalue);
+        key.SetValue("Password", passvalue);
+        key.Close();
+    }
+    else
+    {
+        //--- Read Registry ---
+        uservalue = (string)registryKey.GetValue("Username");
+        passvalue = (string)registryKey.GetValue("Password");
+    }

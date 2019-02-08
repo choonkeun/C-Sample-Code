@@ -1,0 +1,73 @@
+
+--------------------------------------------------------------------------------
+Desired output:
+--------------------------------------------------------------------------------
+<html>
+    <body>
+
+        <select name="values[]">
+            <option value="0"> </option>
+            <option value="1">One</option>
+            <option value="2">Two</option>
+            <option value="3">Three</option>
+        </select>
+        <!-- But 20 times -->   
+
+    </body>
+</html>
+
+--------------------------------------------------------------------------------
+INPUT XML
+--------------------------------------------------------------------------------
+<output>
+    <select>
+        <id>1</id>
+        <name>One</name>
+    </select>
+    <select>
+        <id>2</id>
+        <name>Two</name>
+    </select>
+    <select>
+        <id>3</id>
+        <name>Three</name>
+    </select>
+    <!-- An more -->
+</output>
+
+--------------------------------------------------------------------------------
+XSLT - RECURSIVE
+--------------------------------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <xsl:variable name="options" select="document('options.xml')" />
+
+  <xsl:template match="/">
+    <html>
+      <body>
+        <xsl:call-template name="InsertOptions">
+          <xsl:with-param name="count" select="20" />
+        </xsl:call-template>
+      </body>
+    </html>
+  </xsl:template>
+
+  <xsl:template name="InsertOptions">
+    <xsl:param name="index" select="1"/>
+    <xsl:param name="count" select="1"/>
+
+    <xsl:if test="$index &lt;= $count">
+      <select name="{concat('values', count, '[]')}">
+        <option value="0"> </option>
+        <xsl:for-each select="$options/output/select">
+          <option value="{id}"><xsl:value-of select="name" /></option>
+        </xsl:for-each>
+      </select>
+      <xsl:call-template name="InsertOptions">
+        <xsl:with-param name="index" select="$index + 1" />
+        <xsl:with-param name="count" select="$count" />
+      </xsl:call-template>
+    </xsl:if>
+  </xsl:template>
+</xsl:stylesheet>

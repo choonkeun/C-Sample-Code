@@ -1,0 +1,286 @@
+
+//public enum NodeType
+//{
+//   0 NODE_INVALID,
+//   1 NODE_ELEMENT,
+//   2 NODE_ATTRIBUTE,
+//   3 NODE_TEXT,
+//   4 NODE_CDATA_SECTION,
+//   5 NODE_ENTITY_REFERENCE,
+//   6 NODE_ENTITY,
+//   7 NODE_PROCESSING_INSTRUCTION,
+//   8 NODE_COMMENT,
+//   9 NODE_DOCUMENT,
+//  10 NODE_DOCUMENT_TYPE,
+//  11 NODE_DOCUMENT_FRAGMENT,
+//  12 NODE_NOTATION
+//}
+
+*************************************
+First Example
+*************************************
+        public static void Parse_XML(string XMLData)
+        {
+            System.Xml.XmlDocument oDoc = new System.Xml.XmlDocument();
+            try
+            {
+                oDoc.LoadXml(XMLData);
+                XMLText = "";                           //Result 
+                display_node(oDoc.ChildNodes, -4);      //-4: Indent to display, 4 indent = 4 spaces
+                //MessageBox.Show("Done.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        public static void display_node(System.Xml.XmlNodeList Nodes, int Indent)
+        {
+            Indent += 4;    //Insert space left to make indent
+
+            foreach (System.Xml.XmlNode xNode in Nodes)
+            {
+                if (xNode.NodeType == XmlNodeType.Element || xNode.NodeType == XmlNodeType.Text)
+                {
+                    if (xNode.NodeType == XmlNodeType.Element)
+                    {
+                        XMLText += System.Environment.NewLine;
+                        XMLText += new String(' ', Indent);
+                        XMLText += xNode.Name + ": ";
+                        if (xNode.Attributes.Count > 0)
+                        {
+                            for (int i = 0; i < xNode.Attributes.Count; i++)
+                            //for (int i = 0; i < xNode.Attributes.Count - 1; i++)
+                            {
+                                XMLText += xNode.Attributes[i].Name + ": " + xNode.Attributes[i].Value;
+                                if (i != xNode.Attributes.Count - 1)
+                                    XMLText += ", ";
+                            }
+                        }
+                    }
+                    XMLText += string.IsNullOrEmpty(xNode.Value) ? "" : xNode.Value;
+                }
+                //HasChildNodes should next statement after "if (xNode.NodeType == XmlNodeType.Element)"
+                if (xNode.HasChildNodes)
+                {
+                    display_node(xNode.ChildNodes, Indent);
+                }
+            }
+
+        }
+
+*************************************
+Second Example
+*************************************
+        private Boolean Load_Config()
+        {
+            //http://www.jscape.com/blog/bid/80512/Active-v-s-Passive-FTP-Simplified
+
+            //FTPS:Implicit SSL:990:Encrypts both command and data channels:Default
+            //FTPS:Explicit SSL: 21:Select Encryption:command and/or data channels
+
+            //SFTP:SSH(Secure Shell) protocol: 22:encryption cipher/public key authentication
+
+            //FTP data transfer mode:Active/Passive
+            //Active  mode: 21:command channel,     20:data channel:Server initiates connection
+            //Passive mode: 21:command channel, random:data channel:client initiates connection:Firewall Free:Good
+
+            try
+            {
+                System.Xml.XmlDocument oDoc = new System.Xml.XmlDocument();
+                oDoc.Load(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile); // XmlDoc.Load("App.config");
+				//--------------------------------------------
+                System.Xml.XmlNodeList root = oDoc.ChildNodes;
+                get_config_node(root);
+				//--------------------------------------------
+                canIRun = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message + "\n\n" + "Please check the config file"
+                    + "\n" + "mailreceiver,winscp,ftpserver,sftp,ftps"
+                    + "\n" + "tag name is *** lowercase ***"
+                );
+                canIRun = false;
+            }
+            return canIRun;
+        }
+
+
+        public void get_config_node(System.Xml.XmlNodeList Nodes)
+        {
+            int i, j;
+            System.Xml.XmlNode data;
+            string tmpName, tmpAttName;
+
+            foreach (System.Xml.XmlNode xNode in Nodes)
+            {
+                if (xNode.NodeType == XmlNodeType.Element || xNode.NodeType == XmlNodeType.Text)
+                {
+                    if (xNode.NodeType == XmlNodeType.Element)
+                    {
+                        data = xNode;
+                        tmpName = data.Name.ToLower();
+//Debug.WriteLine(tmpName);
+                        switch (tmpName)
+                        {
+                            case "mailaddress":
+                                for (j = 0; j < data.Attributes.Count; j++)
+                                {
+                                    tmpAttName = data.Attributes[j].Name.ToLower();
+                                    switch (tmpAttName)
+                                    {
+                                        case "mailfrom": mailFrom = data.Attributes[j].Value; break;
+                                        case "mailto": mailto = data.Attributes[j].Value; break;
+                                        case "mailcc": mailcc = data.Attributes[j].Value; break;
+                                        case "mailbcc": mailbcc = data.Attributes[j].Value; break;
+                                        case "maxconnectionfailed": maxConnectionFailed = Convert.ToInt32(data.Attributes[j].Value); break;
+                                        case "mailintervals": mailIntervals = Convert.ToInt32(data.Attributes[j].Value); break;
+                                        case "enablessl": enableSsl = Convert.ToBoolean(data.Attributes[j].Value); break;
+                                    }
+                                }
+                                break;
+                            case "ftpserver":
+                                for (j = 0; j < data.Attributes.Count; j++)
+                                {
+                                    tmpAttName = data.Attributes[j].Name.ToLower();
+                                    switch (tmpAttName)
+                                    {
+                                        case "ftpserverip": ftpServerIP = data.Attributes[j].Value; break;
+                                        case "ftpuserid": ftpUserID = data.Attributes[j].Value; break;
+                                        case "ftppassword": ftpPassword = data.Attributes[j].Value; break;
+                                        case "ftpmode": ftpMode = data.Attributes[j].Value; break;
+                                        case "remotepath": remotePath = data.Attributes[j].Value; break;
+                                        case "localpath": localPath = data.Attributes[j].Value; break;
+                                    }
+                                }
+                                break;
+                            case "winscp":
+                                for (j = 0; j < data.Attributes.Count; j++)
+                                {
+                                    tmpAttName = data.Attributes[j].Name.ToLower();
+                                    switch (tmpAttName)
+                                    {
+                                        case "executablepath": executablePath = data.Attributes[j].Value; break;
+                                        case "sessionlogpath": sessionLogPath = data.Attributes[j].Value; break;
+                                        case "debuglogpath": debugLogPath = data.Attributes[j].Value; break;
+                                        case "sessiontimeout": sessionTimeout = Convert.ToInt32(data.Attributes[j].Value); break;
+                                        case "logging": logging = Convert.ToBoolean(data.Attributes[j].Value); break;
+                                    }
+                                }
+                                break;
+                            case "ftp":
+                                for (j = 0; j < data.Attributes.Count; j++)
+                                {
+                                    tmpAttName = data.Attributes[j].Name.ToLower();
+                                    switch (tmpAttName)
+                                    {
+                                        case "ftpport": ftpPort = Convert.ToInt32(data.Attributes[j].Value); break;
+                                    }
+                                }
+                                break;
+                            case "sftp":
+                                for (j = 0; j < data.Attributes.Count; j++)
+                                {
+                                    tmpAttName = data.Attributes[j].Name.ToLower();
+                                    switch (tmpAttName)
+                                    {
+                                        case "sftpport": sftpPort = Convert.ToInt32(data.Attributes[j].Value); break;
+                                        case "sshhostkey": sshHostKey = data.Attributes[j].Value; break;
+                                    }
+                                }
+                                break;
+                            case "ftps":
+                                for (j = 0; j < data.Attributes.Count; j++)
+                                {
+                                    tmpAttName = data.Attributes[j].Name.ToLower();
+                                    switch (tmpAttName)
+                                    {
+                                        case "ftpsport": ftpsPort = Convert.ToInt32(data.Attributes[j].Value); break;
+                                        case "sslfingerprint": sslFingerprint = data.Attributes[j].Value; break;
+                                        case "ftpsecure": ftpSecure = data.Attributes[j].Value; break;
+                                    }
+                                }
+                                break;
+                            case "add":
+                                for (j = 0; j < data.Attributes.Count; j++)
+                                {
+                                    tmpAttName = data.Attributes[j].Value.ToLower();
+                                    switch (tmpAttName)
+                                    {
+                                        case "protocol": sProtocol = data.Attributes[1].Value; break;
+                                        case "intervals": intervals = Convert.ToInt32(data.Attributes[1].Value); break;
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                }
+                if (xNode.HasChildNodes)
+                {
+//Debug.WriteLine(xNode.Name.ToLower());
+                    get_config_node(xNode.ChildNodes);
+                }
+            }
+        }
+        //------get_config_node	
+        
+*********************************
+app.config, ftpmonitor.exe.config
+*********************************
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+    <!--- do not change tag sequence -->
+    <configSections>  
+      <section name="mailaddress" type="System.Configuration.SingleTagSectionHandler" />  
+      <section name="winscp"      type="System.Configuration.SingleTagSectionHandler" />  
+      <section name="ftpserver"   type="System.Configuration.SingleTagSectionHandler" />  
+      <section name="ftp"         type="System.Configuration.SingleTagSectionHandler" />  
+      <section name="sftp"        type="System.Configuration.SingleTagSectionHandler" />  
+      <section name="ftps"        type="System.Configuration.SingleTagSectionHandler" />  
+    </configSections>  
+
+    <mailaddress mailfrom="CustomerService@driverfacts.com" 
+        mailto="mlee@driverfacts.com" 
+        mailcc="mcpcomputerinc111@sbcglobal.net" 
+        mailbcc="" 
+        maxconnectionfailed="2"
+        mailintervals="5" 
+		enablessl="true" />
+                
+    <winscp executablepath="C:\Program Files (x86)\WinSCP\winscp.exe" 
+        sessionlogpath="E:\SFTP\SFTP-Monitor-V2.1-Net-3.5\session.txt" 
+        debuglogpath="E:\SFTP\SFTP-Monitor-V2.1-Net-3.5\debug.txt" 
+        sessiontimeout="180" 
+        logging="true" /> 
+
+    <ftpserver ftpserverip="207.38.6.247" 
+        ftpuserid="dflistener" 
+        ftppassword="5rPsQj" 
+        ftpmode="Passive" 
+        remotepath="/" 
+        localpath="E:\SFTP\SFTP-Monitor-V2.1-Net-3.5" />  
+                
+    <ftp  ftpport= "21" /> 
+    <sftp sftpport= "22"  sshhostkey="ssh-rsa 1024 6b:1a:d8:24:01:74:2a:69:42:aa:1b:d3:c1:a4:37:b2" /> 
+    <ftps ftpsport= "990" sslfingerprint="4f:85:eb:90:56:65:e9:99:76:91:92:c6:ff:fe:4d:c2:b3:63:24:d9" ftpsecure="Implicit" /> 
+                
+    <appSettings>
+      <add key="protocol" value="FTPS" />    	<!--- FTP/SFTP/FTPS -->
+      <add key="intervals" value="15" />    	<!--- Default:15, 1/5/15/30 -->
+    </appSettings>
+    
+    <system.net>
+       <mailSettings>
+          <smtp from="CustomerService@driverfacts.com" deliveryMethod="Network" >
+             <network host="smtp.att.yahoo.com" port="465" 
+                      userName="mcpcomputerinc@sbcglobal.net" password="1275north" 
+                      defaultCredentials="false" />
+          </smtp>
+       </mailSettings>
+    </system.net>
+
+</configuration>
+
+        

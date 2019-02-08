@@ -1,0 +1,52 @@
+    private void read_config()
+    {
+        // Read App.Config
+        System.Configuration.Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+        MailSettingsSectionGroup mailSettings = (MailSettingsSectionGroup)config.GetSectionGroup(@"system.net/mailSettings");
+        mFrom = mailSettings.Smtp.From;
+        mPort = mailSettings.Smtp.Network.Port;
+        mHost = mailSettings.Smtp.Network.Host;
+        mUsername = mailSettings.Smtp.Network.UserName;
+        mPassword = mailSettings.Smtp.Network.Password;
+
+        AppSettingsSection appSettings = (AppSettingsSection)config.GetSection("appSettings");
+        interval = Convert.ToInt32(appSettings.Settings["interval"].Value);
+        mailout = Convert.ToInt32(appSettings.Settings["mailout"].Value);
+        recovermail = Convert.ToBoolean(appSettings.Settings["recovermail"].Value);
+        logall = Convert.ToBoolean(appSettings.Settings["logall"].Value);
+        pingall = Convert.ToBoolean(appSettings.Settings["pingall"].Value);
+        enablessl = Convert.ToBoolean(appSettings.Settings["enablessl"].Value);
+        targetFile = AppDomain.CurrentDomain.BaseDirectory + @"\" + appSettings.Settings["target"].Value;
+        logFile = AppDomain.CurrentDomain.BaseDirectory + @"\" + DateTime.Now.ToString("yyyy-MM-dd") + "_" + appSettings.Settings["logfile"].Value;
+        mTo = appSettings.Settings["mailto"].Value;
+        mCC = appSettings.Settings["mailcc"].Value;
+        mBCC = appSettings.Settings["mailbcc"].Value;
+    }
+---
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+    <appSettings>
+      <add key="interval" value="2" />
+      <add key="mailout" value="10" />
+      <add key="target" value="target.txt" />
+      <add key="logfile" value="pinglog.txt" />
+      <add key="logall" value="true" />
+      <add key="pingall" value="true" />
+      <add key="recovermail" value="true" />
+      <add key="mailto" value="****@***********.com" />
+      <add key="mailcc" value="" />
+      <add key="mailbcc" value="" />
+      <add key="enablessl" value="true" />
+    </appSettings>
+    
+    <system.net>
+       <mailSettings>
+          <smtp from="CustomerService@***********.com" deliveryMethod="Network" >
+             <network host="smtp.att.yahoo.com" port="465" 
+                      userName="**************@sbcglobal.net" password="*********" 
+                      defaultCredentials="false" />
+          </smtp>
+       </mailSettings>
+    </system.net>
+
+</configuration>

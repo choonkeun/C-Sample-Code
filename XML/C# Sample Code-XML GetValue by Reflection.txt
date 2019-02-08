@@ -1,0 +1,61 @@
+
+------------------------------------
+XML Code mapping using C# reflection
+------------------------------------
+        enum ResultCategory
+        {
+            [XmlEnum("POS")]   P,
+            [XmlEnum("NEG")]   N,
+            [XmlEnum("NOR")]   C,
+            [XmlEnum("COM")]   X
+        };
+        public class Test
+        {
+            [XmlAttribute("Code")]                  public string Code { get; set; }
+            [XmlElement("TestPerformed")]           public string TestPerformed { get; set; }
+            [XmlElement("Substance")]               public string Substance { get; set; }
+            [XmlElement("Purpose")]                 public string Purpose { get; set; }
+            [XmlElement("Cutoff")]                  public string Cutoff { get; set; }
+            [XmlElement("ResultCode")]              public string ResultCode { get; set; }
+            [XmlElement("ResultCategory")]          public string ResultCategory { get; set; }      //"POS","NEG","NOR","COM"
+            [XmlElement("Result")]                  public string Result { get; set; }
+            [XmlElement("Quantitation")]            public string Quantitation { get; set; }
+            [XmlElement("UnitMeasure")]             public string UnitMeasure { get; set; }
+        }
+
+---
+        input : test.ResultCategory = "POS", "NEG", ...
+        
+        if (test.ResultCategory.Length > 0)
+        {
+            //find enum value "P" using attribute value "POS"
+            //"P" = GetCode<ResultCategory>("POS");
+            object rc = GetCode<ResultCategory>(test.ResultCategory);
+            string codeValue = rc.ToString();        // codeValue = "P"
+        }
+
+---
+        // https://stackoverflow.com/questions/3047125/retrieve-enum-value-based-on-xmlenumattribute-name-value
+        public static T GetCode<T>(string value)
+        {
+            // http://stackoverflow.com/a/3073272/194717
+            foreach (object o in System.Enum.GetValues(typeof(T)))
+            {
+                T enumValue = (T)o;
+                if (GetXmlAttrNameFromEnumValue<T>(enumValue).Equals(value, StringComparison.OrdinalIgnoreCase))
+                {
+                    return (T)o;
+                }
+            }
+            throw new ArgumentException("No XmlEnumAttribute code exists for type " + typeof(T).ToString() + " corresponding to value of " + value);
+        }
+
+        public static string GetXmlAttrNameFromEnumValue<T>(T pEnumVal)
+        {
+            // http://stackoverflow.com/q/3047125/194717
+            Type type = pEnumVal.GetType();
+            FieldInfo info = type.GetField(Enum.GetName(typeof(T), pEnumVal));
+            XmlEnumAttribute att = (XmlEnumAttribute)info.GetCustomAttributes(typeof(XmlEnumAttribute), false)[0];
+            //If there is an xmlattribute defined, return the name
+            return att.Name;
+        }
