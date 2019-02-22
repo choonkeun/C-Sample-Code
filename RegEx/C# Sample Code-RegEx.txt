@@ -31,3 +31,14 @@ source = a2.Replace(source, "");
 ---
 string s1 = "This string has something at the end<br/>";
 string s2 = System.Text.RegularExpressions.Regex.Replace(s1, "<br/>$", "");  // Use regular expression to trim the ending string.
+---
+var regexMatches = Regex.Matches(document.Text, @"{{TEXT-[1-5][1-6]}}");
+if (regexMatches != null && regexMatches.Count > 0)
+{
+    List<Match> matchList = regexMatches.Cast<Match>().Where(t => t.Value == @"{{TEXT-21}}").ToList();
+    //foreach (Match m in regexMatches) 
+    //{
+    //    document.ReplaceText(m.Value.ToString(), " Value ");
+    //}
+}
+
