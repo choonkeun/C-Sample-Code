@@ -1,0 +1,79 @@
+C# Sample LINQ1.txt
+-------------------
+Users can query XML documents, relational databases and in-memory collections by querying using LINQ
+
+    MatchCollection foundMatch = Regex.Matches(sampleData, @"ISA|CLM|(REF\*F8|REF\*D9)", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+    
+    //LINQ Query
+    IEnumerable<Match> CLMs = (from Match m in foundMatch where m.Value == "CLM" select m);
+    bool result             = (from Match m in foundMatch where m.Value == "CLM" select m).Any();
+
+    //LINQ Method
+    IEnumerable<Match> CLMs2 = foundMatch.Cast<Match>().Where(m => m.Value == "CLM");
+    bool result2             = foundMatch.Cast<Match>().Where(m => m.Value == "CLM").Any();
+
+====
+
+    try
+    {
+       
+        using (var document = Xceed.Words.NET.DocX.Load(TemplateName))
+        {
+            var regexMatches = Regex.Matches(document.Text, @"{{TEXT-[1-5][1-6]}}");
+            if (regexMatches != null && regexMatches.Count > 0)
+            {
+                foreach (Match m in regexMatches)
+                {
+                    string id = m.Value.Split('-')[1].Substring(0, 2);
+
+                    bool found = InquiryList.Cast<KeyValuePair<string, string>>().Any(t => t.Key == id);
+                    if (found)
+                    {
+                        //Way 1: LINQ Query
+                        //KeyValuePair<string, string> kvp = (from k in InquiryList.AsEnumerable()
+                        //                                    where k.Key == id
+                        //                                    select k).SingleOrDefault();
+
+                        //Way 2: LINQ Method
+                        //KeyValuePair<string, string> kvp = InquiryList.AsQueryable()
+                        //                                   .Where(GetPredicate(InquiryList, id))
+                        //                                   .AsEnumerable()  //.AsQueryable()
+                        //                                   .SingleOrDefault();
+
+                        //Way 3
+                        KeyValuePair<string, string> kvp = InquiryList
+                                                            .Cast<KeyValuePair<string, string>>()
+                                                            .Where(t => t.Key == id)
+                                                            .AsEnumerable()  //.AsQueryable()
+                                                            .SingleOrDefault(); 
+                                                            
+                        document.ReplaceText(m.Value.ToString(), kvp.Value);
+                    }
+                    else
+                    {
+                        document.ReplaceText(m.Value, emptyValue);
+                    }
+                }
+            }
+        }
+        //do somethings
+    }
+    catch (Exception ex)
+    {
+        string loggingData = String.Format("Error: {0}", ex.Message);
+    }
+
+    
+private static Expression<Func<KeyValuePair<string, string>, bool>> GetPredicate(List<KeyValuePair<string, string>> kvp, string id)
+{
+    return (f) => f.Key == id;
+}
+
+---Cast() and Oftype() in Linq
+OfType  - return only the elements that can safely be cast to type x.
+Cast    - will try to cast all the elements into type x. if some of them are not from this type you will get InvalidCastException
+
+object[] objs = new object[] { "12345", 12 };
+string[] arr1 = objs.Cast<string>().ToArray();      //throws InvalidCastException: Error: Unable to cast object of type 'System.Int32' to type 'System.String'.
+string[] arr2 = objs.OfType<string>().ToArray();    //return { "12345" }
+
