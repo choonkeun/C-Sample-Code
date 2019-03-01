@@ -1,0 +1,110 @@
+public void Main()
+{
+    string SourceFolder = Dts.Variables["User::SourceFolder"].Value.ToString();
+    string TargetFolder = Dts.Variables["User::TargetFolder"].Value.ToString();
+    string LogFolder = Dts.Variables["User::LogFolder"].Value.ToString();
+    string FilePattern = Dts.Variables["User::FilePattern"].Value.ToString();
+
+    string delimiter = string.Empty;
+    string header = string.Empty;
+    string trailer = string.Empty;
+    string logFileName = LogFolder + "\\Log_" + DateTime.Now.ToString("yyyy-MM-dd_HHmm") + ".txt";
+    string errFileName = LogFolder + "\\Err_" + DateTime.Now.ToString("yyyy-MM-dd_HHmm") + ".txt";
+
+    //log
+    File.AppendAllText(logFileName, "started on: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + Environment.NewLine);
+
+    try
+    {
+        string[] filters = Regex.Replace(FilePattern, @"\s+", string.Empty).Split(',');
+        string[] filePaths = filters.SelectMany(f => Directory.GetFiles(SourceFolder, f)).ToArray();
+        foreach (string f in filePaths)
+        {
+            //List<string> strings = new List<string> { "B", "C", "D" };
+            //strings.Insert(0, "A");   //Slow
+            
+            string targetName = TargetFolder + "\\" + Path.GetFileNameWithoutExtension(f) + ".csv";
+            List<string> lines = convertExcelToCSV(f);
+            //lines[0] = "HH,FILE TYPE=99,FORMAT=CSV,DATE=" + DateTime.Now.ToString("MM/dd/yyyy");
+            lines.Insert(0,"HH,FILE TYPE=99,FORMAT=CSV,DATE=" + DateTime.Now.ToString("MM/dd/yyyy"));
+            lines.Add( (lines.Count).ToString("TT000000000") );     //fast
+
+            //write new file
+            System.IO.File.WriteAllLines(targetName, lines);
+
+            //log
+            File.AppendAllText(logFileName, "filename: " + f + Environment.NewLine);
+        }
+
+        //log
+        File.AppendAllText(logFileName, "finished on: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + Environment.NewLine);
+
+        Dts.TaskResult = (int)ScriptResults.Success;
+    }
+    catch (Exception exception)
+    {
+        // Create Log File for Errors
+        using (StreamWriter sw = File.CreateText(errFileName))
+        {
+            sw.WriteLine(exception.ToString());
+            Dts.TaskResult = (int)ScriptResults.Failure;
+        }
+    }
+
+}
+
+static List<string> convertExcelToCSV(string sourceFile)
+{
+    string strConn = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + sourceFile + ";Extended Properties=\"Excel 12.0;HDR=No;IMEX=1\";";
+
+    bool isTitle = false;
+    List<string> lines = new List<string>();
+    OleDbConnection conn = null;
+    OleDbCommand cmd = null;
+    OleDbDataAdapter da = null;
+    //lines.Add("");  //header line
+
+    try
+    {
+        conn = new OleDbConnection(strConn);
+        conn.Open();
+
+        cmd = new OleDbCommand("SELECT * FROM [TEMP01$]", conn);
+        cmd.CommandType = CommandType.Text;
+
+        da = new OleDbDataAdapter(cmd);
+        DataTable dt = new DataTable();
+        da.Fill(dt);
+
+        for (int x = 0; x < dt.Rows.Count; x++)
+        {
+            string rowString = "";
+            string fv = dt.Rows[x][0].ToString().Trim();
+            if (fv.Length > 0 && fv.ToLower() != "file type")
+            {
+                for (int y = 0; y < dt.Columns.Count; y++)
+                {
+                    rowString += dt.Rows[x][y].ToString();
+                    rowString += (y < dt.Columns.Count - 1) ? "," : string.Empty;
+                }
+                lines.Add(rowString);
+            }
+        }
+    }
+    catch (Exception exc)
+    {
+        Console.WriteLine(exc.ToString());
+        Console.ReadLine();
+    }
+    finally
+    {
+        if (conn.State == ConnectionState.Open)
+            conn.Close();
+        conn.Dispose();
+        cmd.Dispose();
+        da.Dispose();
+    }
+
+    return lines;
+}
+
