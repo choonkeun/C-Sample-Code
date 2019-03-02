@@ -1,0 +1,29 @@
+
+----------------------------------------------------------------------------------------------------
+Microsoft.ACE.OLEDB.12.0
+----------------------------------------------------------------------------------------------------
+On 64bit OS;
+
+1) If 32bit is installed : 
+    C:\Program Files (x86)\Common Files\Microsoft Shared\OFFICE14\ACEOLEDB.DLL
+    
+2) If 64bit is installed : 
+    C:\Program Files\Common Files\Microsoft Shared\OFFICE14\ACEOLEDB.DLL
+
+On a 32bit OS;
+   C:\Program Files\Common Files\Microsoft Shared\OFFICE14\ACEOLEDB.DLL
+    
+Also look at the latest driver : 
+   http://www.microsoft.com/en-in/download/details.aspx?id=13255[^]
+
+
+
+
+
+
+
+
+
+
+
+

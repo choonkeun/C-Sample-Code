@@ -36,17 +36,15 @@ namespace ST_b18cbaeef13440debbac3c35e6027c84
 
             string[] LOB = new string[] { "MC", "OC", "OCC" };
             string YYYYMM = DateTime.Now.ToString("yyyyMM");
-            string fileFullPath = "";
             int rowsProcessed = 0;  
             byte[] emptyBytes = new byte[0];  
             
             foreach (string file in files)
             {
-                fileFullPath = file;
                 string filename = Path.GetFileName(file);
                 string filenameOnly = Path.GetFileNameWithoutExtension(filename);
 
-                //Veyo_Invoice_[MC]_YYYYMM.xlsx, Veyo_Invoice_[OC]_YYYYMM.xlsx, Veyo_Invoice_[OCC]_YYYYMM.xlsx
+                //Invoice_[MC]_YYYYMM.xlsx, Invoice_[OC]_YYYYMM.xlsx, Invoice_[OCC]_YYYYMM.xlsx
                 string[] fileToken = filenameOnly.Split('_');
                 if (fileToken.Length < 4)
                     continue;
@@ -60,12 +58,11 @@ namespace ST_b18cbaeef13440debbac3c35e6027c84
 #region Convert Excel to Text
                 Try
                 {
-                    string ConStr;
                     string HDR = "YES"; 
-                    ConStr = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + fileFullPath + ";Extended Properties=\"Excel 12.0;HDR=" + HDR + ";IMEX=0\"";
+                    string ConStr = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + file + ";Extended Properties=\"Excel 12.0;HDR=" + HDR + ";IMEX=0\"";
                     OleDbConnection conn = new OleDbConnection(ConStr);
-
-                    conn.Open();
+                    conn.Open();        //ACE.OLEDB Windows 64bit + ADODB 32bit => Error
+                    
                     DataTable dtSheet = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
                     string sheetname = string.Empty; 
                     Int16 sheetcnt = 0;
@@ -124,13 +121,13 @@ namespace ST_b18cbaeef13440debbac3c35e6027c84
                                             }
                                         }
                                         sw.Write(sw.NewLine);
+                                        
+                                        rowsProcessed++;  
+                                        Dts.Log("Rows processed: " + rowsProcessed.ToString(), 0, emptyBytes);  
+                                        Dts.TaskResult = (int)ScriptResults.Success;  
                                     }
                                 }
                                 sw.Close();
-                                
-                                Dts.Log("Rows processed: " + rowsProcessed.ToString(), 0, emptyBytes);  
-                                Dts.TaskResult = (int)ScriptResults.Success;  
-
                             } //if (sheetname.ToLower() == "detail")
                         }
                     }
@@ -159,4 +156,3 @@ namespace ST_b18cbaeef13440debbac3c35e6027c84
     }
 
 }
-
