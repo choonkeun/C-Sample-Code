@@ -1,0 +1,162 @@
+
+#region Namespaces
+using System;
+using System.Data;
+using Microsoft.SqlServer.Dts.Runtime;
+using System.Windows.Forms;
+
+using System.Linq;
+using System.IO;
+using System.Data.OleDb;
+#endregion
+
+namespace ST_b18cbaeef13440debbac3c35e6027c84
+{
+    [Microsoft.SqlServer.Dts.Tasks.ScriptTask.SSISScriptTaskEntryPointAttribute]
+    public partial class ScriptMain : Microsoft.SqlServer.Dts.Tasks.ScriptTask.VSTARTScriptObjectModelBase
+    {
+        public void Main()
+        {
+            // TODO: Add your code here
+
+            //A 64-bit version of the 'Microsoft Access Database Engine 2010 Redistributable' that will allow you to use the 'Microsoft.ACE.OLEDB.12.0' provider
+            //http://www.microsoft.com/en-us/download/details.aspx?id=13255
+            //Microsoft Access Database Engine 2010 Redistributable
+            
+            String PackageName = (String)Dts.Variables["System::PackageName"].Value;
+
+            string SourceFolder = Dts.Variables["User::SourceFolder"].Value.ToString();
+            string TargetFolder = Dts.Variables["User::TargetFolder"].Value.ToString();
+            string FileDelimited = Dts.Variables["User::Delimiter"].Value.ToString();
+
+            var files = Directory
+                    .GetFiles(SourceFolder, "*.*")
+                    .Where(file => file.ToLower().EndsWith(".xlsx") || file.ToLower().EndsWith(".xls"))
+                    .ToList();
+
+            string[] LOB = new string[] { "MC", "OC", "OCC" };
+            string YYYYMM = DateTime.Now.ToString("yyyyMM");
+            string fileFullPath = "";
+            int rowsProcessed = 0;  
+            byte[] emptyBytes = new byte[0];  
+            
+            foreach (string file in files)
+            {
+                fileFullPath = file;
+                string filename = Path.GetFileName(file);
+                string filenameOnly = Path.GetFileNameWithoutExtension(filename);
+
+                //Veyo_Invoice_[MC]_YYYYMM.xlsx, Veyo_Invoice_[OC]_YYYYMM.xlsx, Veyo_Invoice_[OCC]_YYYYMM.xlsx
+                string[] fileToken = filenameOnly.Split('_');
+                if (fileToken.Length < 4)
+                    continue;
+
+                bool matchLOB = LOB.Contains(fileToken[2].ToUpper());
+                if (fileToken[3] != YYYYMM || !matchLOB)
+                {
+                    continue;
+                }
+
+#region Convert Excel to Text
+                Try
+                {
+                    string ConStr;
+                    string HDR = "YES"; 
+                    ConStr = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + fileFullPath + ";Extended Properties=\"Excel 12.0;HDR=" + HDR + ";IMEX=0\"";
+                    OleDbConnection conn = new OleDbConnection(ConStr);
+
+                    conn.Open();
+                    DataTable dtSheet = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+                    string sheetname = string.Empty; 
+                    Int16 sheetcnt = 0;
+                    foreach (DataRow drSheet in dtSheet.Rows)
+                    {
+                        sheetcnt += 1;
+                        if (drSheet["TABLE_NAME"].ToString().Contains("$"))
+                        {
+                            sheetname = drSheet["TABLE_NAME"].ToString();
+                            OleDbCommand oconn = new OleDbCommand("select * from [" + sheetname + "]", conn);
+                            OleDbDataAdapter adp = new OleDbDataAdapter(oconn);
+                            DataTable dt = new DataTable();
+                            adp.Fill(dt);
+
+                            sheetname = sheetname.Replace("$", "");
+
+                            if (sheetname.ToLower() == "detail")
+                            {
+                                //StreamWriter sw = new StreamWriter(TargetFolder + "\\" + filename + "_" + sheetname + ".csv", true);
+                                StreamWriter sw = new StreamWriter(TargetFolder + "\\" + filenameOnly + ".csv", true);
+                                int ColumnCount = dt.Columns.Count;
+                                //Header Line
+                                if (sheetcnt == 1)
+                                {
+                                    // Write the Header Row to File
+                                    for (int i = 0; i < ColumnCount; i++)
+                                    {
+                                        sw.Write(dt.Columns[i]);
+                                        if (i < ColumnCount - 1)
+                                        {
+                                            sw.Write(FileDelimited);
+                                        }
+                                    }
+                                    sw.Write(sw.NewLine);
+                                }
+
+                                //Data Line
+                                foreach (DataRow dr in dt.Rows)
+                                {
+                                    if (dr.IsNull(0))
+                                    {
+                                        continue;
+                                        //MessageBox.Show(dr.ItemArray[0].ToString());
+                                    }
+                                    if (dr.ItemArray[0].ToString().Trim().Length > 0)
+                                    {
+                                        for (int i = 0; i < ColumnCount; i++)
+                                        {
+                                            if (!Convert.IsDBNull(dr[i]))
+                                            {
+                                                sw.Write(dr[i].ToString());
+                                            }
+                                            if (i < ColumnCount - 1)
+                                            {
+                                                sw.Write(FileDelimited);
+                                            }
+                                        }
+                                        sw.Write(sw.NewLine);
+                                    }
+                                }
+                                sw.Close();
+                                
+                                Dts.Log("Rows processed: " + rowsProcessed.ToString(), 0, emptyBytes);  
+                                Dts.TaskResult = (int)ScriptResults.Success;  
+
+                            } //if (sheetname.ToLower() == "detail")
+                        }
+                    }
+                }
+                catch (Exception ex)  
+                {  
+                    //An error occurred.  
+                    Dts.Events.FireError(0, "Package Name: " + PackageName, ex.Message + "\r" + ex.StackTrace, String.Empty, 0);  
+                    Dts.TaskResult = (int)ScriptResults.Failure;  
+                }  
+
+#endregion
+
+            }
+            Dts.TaskResult = (int)ScriptResults.Success;
+        }
+
+        #region ScriptResults declaration
+        enum ScriptResults
+        {
+            Success = Microsoft.SqlServer.Dts.Runtime.DTSExecResult.Success,
+            Failure = Microsoft.SqlServer.Dts.Runtime.DTSExecResult.Failure
+        };
+        #endregion
+
+    }
+
+}
+
