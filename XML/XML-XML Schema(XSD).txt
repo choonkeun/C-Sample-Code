@@ -1,0 +1,515 @@
+
+XML Schema is also referred to as XML Schema Definition (XSD).
+
+well-formed XML document is
+    it must begin with the XML declaration
+    it must have one unique root element
+    start-tags must have matching end-tags
+    elements are case sensitive
+    all elements must be closed
+    all elements must be properly nested
+    all attribute values must be quoted
+    entities must be used for special characters
+
+--"note.xml"
+<?xml version="1.0"?>
+<note>
+  <to>Tove</to>
+  <from>Jani</from>
+  <heading>Reminder</heading>
+  <body>Don't forget me this weekend!</body>
+</note>
+
+<?xml version="1.0"?>
+<note 
+xmlns="https://www.w3schools.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="https://www.w3schools.com/xml note.xsd">
+  <to>Tove</to>
+  <from>Jani</from>
+  <heading>Reminder</heading>
+  <body>Don't forget me this weekend!</body>
+</note>
+
+
+--"note.dtd"
+<!ELEMENT note (to, from, heading, body)>
+<!ELEMENT to (#PCDATA)>
+<!ELEMENT from (#PCDATA)>
+<!ELEMENT heading (#PCDATA)>
+<!ELEMENT body (#PCDATA)>
+
+--"note.xsd"
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="https://www.w3schools.com"
+xmlns="https://www.w3schools.com" elementFormDefault="qualified">
+
+<xs:element name="note">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element name="to" type="xs:string"/>
+      <xs:element name="from" type="xs:string"/>
+      <xs:element name="heading" type="xs:string"/>
+      <xs:element name="body" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>
+
+---XSD Simple Elements
+XML Schema has a lot of built-in data types. The most common types are:
+
+    xs:string
+    xs:decimal
+    xs:integer
+    xs:boolean
+    xs:date
+    xs:time
+    
+    
+--XSD Attributes
+<lastname lang="EN">Smith</lastname>   
+<xs:attribute name="lang" type="xs:string" default="EN"/>    
+
+--XSD Restrictions/Facets
+<xs:element name="age">
+  <xs:simpleType>
+    <xs:restriction base="xs:integer">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="120"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:element>
+
+<xs:element name="car">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Audi"/>
+      <xs:enumeration value="Golf"/>
+      <xs:enumeration value="BMW"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:element>
+
+<xs:element name="letter">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z]"/>  or <xs:pattern value="([a-z])*"/> or <xs:pattern value="([a-z][A-Z])+"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:element>
+
+--XML processor WILL NOT remove any white space characters
+<xs:element name="address">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+      <xs:whiteSpace value="preserve"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:element>
+
+<xs:whiteSpace value="preserve"/>
+<xs:whiteSpace value="replace"/>
+<xs:whiteSpace value="collapse"/>
+<xs:length value="8"/>
+<xs:minLength value="5"/><xs:maxLength value="8"/>
+
+---Restrictions for Datatypes
+--------------- --------------------------------------------------------------------------------------------------------
+Constraint	    Description
+--------------- --------------------------------------------------------------------------------------------------------
+enumeration	    Defines a list of acceptable values
+fractionDigits	Specifies the maximum number of decimal places allowed. Must be equal to or greater than zero
+length	        Specifies the exact number of characters or list items allowed. Must be equal to or greater than zero
+maxExclusive	Specifies the upper bounds for numeric values (the value must be less than this value)
+maxInclusive	Specifies the upper bounds for numeric values (the value must be less than or equal to this value)
+maxLength	    Specifies the maximum number of characters or list items allowed. Must be equal to or greater than zero
+minExclusive	Specifies the lower bounds for numeric values (the value must be greater than this value)
+minInclusive	Specifies the lower bounds for numeric values (the value must be greater than or equal to this value)
+minLength	    Specifies the minimum number of characters or list items allowed. Must be equal to or greater than zero
+pattern	        Defines the exact sequence of characters that are acceptable
+totalDigits	    Specifies the exact number of digits allowed. Must be greater than zero
+whiteSpace	    Specifies how white space (line feeds, tabs, spaces, and carriage returns) is handled
+--------------- --------------------------------------------------------------------------------------------------------
+
+---Define a Complex Element
+<xs:element name="employee" type="personinfo"/>
+<xs:element name="student" type="personinfo"/>
+<xs:element name="member" type="personinfo"/>
+
+<xs:complexType name="personinfo">
+  <xs:sequence>
+    <xs:element name="firstname" type="xs:string"/>
+    <xs:element name="lastname" type="xs:string"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+
+---Complex Text-Only Elements
+
+<xs:element name="somename">
+  <xs:complexType>
+    <xs:simpleContent>
+      <xs:extension base="basetype">
+        ....
+        ....
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+</xs:element>
+
+OR
+
+<xs:element name="somename">
+  <xs:complexType>
+    <xs:simpleContent>
+      <xs:restriction base="basetype">
+        ....
+        ....
+      </xs:restriction>
+    </xs:simpleContent>
+  </xs:complexType>
+</xs:element>
+
+--Samples
+<shoesize country="france">35</shoesize>
+
+<xs:element name="shoesize">
+  <xs:complexType>
+    <xs:simpleContent>
+      <xs:extension base="xs:integer">
+        <xs:attribute name="country" type="xs:string" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+</xs:element>
+
+OR
+
+<xs:element name="shoesize" type="shoetype"/>
+
+<xs:complexType name="shoetype">
+  <xs:simpleContent>
+    <xs:extension base="xs:integer">
+      <xs:attribute name="country" type="xs:string" />
+    </xs:extension>
+  </xs:simpleContent>
+</xs:complexType>
+
+
+
+---XSD Mixed Content
+<letter>
+  Dear Mr. <name>John Smith</name>.
+  Your order <orderid>1032</orderid>
+  will be shipped on <shipdate>2001-07-13</shipdate>.
+</letter>
+
+<xs:element name="letter" type="lettertype"/>
+
+<xs:complexType name="lettertype" mixed="true">
+  <xs:sequence>
+    <xs:element name="name" type="xs:string"/>
+    <xs:element name="orderid" type="xs:positiveInteger"/>
+    <xs:element name="shipdate" type="xs:date"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+
+---XSD Indicators
+Order indicators:
+    All
+    Choice
+    Sequence
+    
+Occurrence indicators:
+    maxOccurs
+    minOccurs
+    
+Group indicators:
+    Group name
+    attributeGroup name
+
+--All,choice,sequence
+<xs:element name="person">
+  <xs:complexType>
+    <xs:all>
+      <xs:element name="full_name" type="xs:string"/>
+      <xs:element name="child_name" type="xs:string" minOccurs="0" maxOccurs="10" />
+    </xs:all>
+    <xs:choice>
+      <xs:element name="employee" type="employee" />
+      <xs:element name="member" type="member"/>
+    </xs:choice>
+    <xs:sequence>
+      <xs:element name="firstname" type="xs:string"/>
+      <xs:element name="lastname" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:attributeGroup name="personattrgroup">
+  <xs:attribute name="firstname" type="xs:string"/>
+  <xs:attribute name="lastname" type="xs:string"/>
+  <xs:attribute name="birthday" type="xs:date"/>
+</xs:attributeGroup>
+
+<xs:element name="person">
+  <xs:complexType>
+    <xs:attributeGroup ref="personattrgroup"/>
+  </xs:complexType>
+</xs:element>
+
+--XML
+<?xml version="1.0" encoding="UTF-8"?>
+<persons xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:noNamespaceSchemaLocation="family.xsd">
+<person>
+  <full_name>Hege Refsnes</full_name>
+  <child_name>Cecilie</child_name>
+</person>
+<person>
+  <full_name>Tove Refsnes</full_name>
+  <child_name>Hege</child_name>
+  <child_name>Stale</child_name>
+  <child_name>Jim</child_name>
+  <child_name>Borge</child_name>
+</person>
+<person>
+  <full_name>Stale Refsnes</full_name>
+</person>
+</persons>
+
+
+---XSD The <any> Element
+<xs:element name="person">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element name="firstname" type="xs:string"/>
+      <xs:element name="lastname" type="xs:string" maxOccurs="unbounded"/>
+      <xs:any minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+
+---XSD The <anyAttribute> Element
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="https://www.w3schools.com"
+ xmlns="https://www.w3schools.com" elementFormDefault="qualified">
+<xs:attribute name="eyecolor">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="blue|brown|green|grey"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:attribute>
+</xs:schema>
+
+--
+<xs:element name="person">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element name="firstname" type="xs:string"/>
+      <xs:element name="lastname" type="xs:string"/>
+    </xs:sequence>
+    <xs:anyAttribute/>
+  </xs:complexType>
+</xs:element>
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<persons xmlns="http://www.microsoft.com" 
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:SchemaLocation="http://www.microsoft.com family.xsd
+ https://www.w3schools.com attribute.xsd">
+
+<person eyecolor="green">
+  <firstname>Hege</firstname>
+  <lastname>Refsnes</lastname>
+</person>
+
+<person eyecolor="blue">
+  <firstname>Stale</firstname>
+  <lastname>Refsnes</lastname>
+</person>
+
+</persons>
+
+
+
+---XSD Element Substitution
+<xs:element name="name" type="xs:string"/>
+<xs:element name="navn" substitutionGroup="name"/>
+
+<xs:complexType name="custinfo">
+  <xs:sequence>
+    <xs:element ref="name"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="customer" type="custinfo"/>
+<xs:element name="kunde" substitutionGroup="customer"/>
+
+<customer>
+  <name>John Smith</name>
+</customer>
+OR
+<kunde>
+  <navn>John Smith</navn>
+</kunde>
+
+
+---SAMPLES("shiporder.xsd")
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<xs:element name="shiporder">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element name="orderperson" type="xs:string"/>
+      <xs:element name="shipto">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="name"     type="xs:string"/>
+            <xs:element name="address"  type="xs:string"/>
+            <xs:element name="city"     type="xs:string"/>
+            <xs:element name="country"  type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="item"           maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="title"    type="xs:string"/>
+            <xs:element name="note"     type="xs:string"    minOccurs="0"/>
+            <xs:element name="quantity" type="xs:positiveInteger"/>
+            <xs:element name="price"    type="xs:decimal"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="orderid" type="xs:string"   use="required"/>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>
+
+
+---Divide the Schema("shiporder.xsd")
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<!-- definition of simple elements -->
+<xs:element name="orderperson" type="xs:string"/>
+<xs:element name="name" type="xs:string"/>
+<xs:element name="address" type="xs:string"/>
+<xs:element name="city" type="xs:string"/>
+<xs:element name="country" type="xs:string"/>
+<xs:element name="title" type="xs:string"/>
+<xs:element name="note" type="xs:string"/>
+<xs:element name="quantity" type="xs:positiveInteger"/>
+<xs:element name="price" type="xs:decimal"/>
+
+<!-- definition of attributes -->
+<xs:attribute name="orderid" type="xs:string"/>
+
+<!-- definition of complex elements -->
+<xs:element name="shipto">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="name"/>
+      <xs:element ref="address"/>
+      <xs:element ref="city"/>
+      <xs:element ref="country"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="item">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="title"/>
+      <xs:element ref="note" minOccurs="0"/>
+      <xs:element ref="quantity"/>
+      <xs:element ref="price"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="shiporder">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="orderperson"/>
+      <xs:element ref="shipto"/>
+      <xs:element ref="item" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute ref="orderid" use="required"/>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>
+
+---Using Named Types
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<xs:simpleType name="stringtype">
+  <xs:restriction base="xs:string"/>
+</xs:simpleType>
+
+<xs:simpleType name="inttype">
+  <xs:restriction base="xs:positiveInteger"/>
+</xs:simpleType>
+
+<xs:simpleType name="dectype">
+  <xs:restriction base="xs:decimal"/>
+</xs:simpleType>
+
+<xs:simpleType name="orderidtype">
+  <xs:restriction base="xs:string">
+    <xs:pattern value="[0-9]{6}"/>
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="shiptotype">
+  <xs:sequence>
+    <xs:element name="name" type="stringtype"/>
+    <xs:element name="address" type="stringtype"/>
+    <xs:element name="city" type="stringtype"/>
+    <xs:element name="country" type="stringtype"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="itemtype">
+  <xs:sequence>
+    <xs:element name="title" type="stringtype"/>
+    <xs:element name="note" type="stringtype" minOccurs="0"/>
+    <xs:element name="quantity" type="inttype"/>
+    <xs:element name="price" type="dectype"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="shipordertype">
+  <xs:sequence>
+    <xs:element name="orderperson" type="stringtype"/>
+    <xs:element name="shipto" type="shiptotype"/>
+    <xs:element name="item" maxOccurs="unbounded" type="itemtype"/>
+  </xs:sequence>
+  <xs:attribute name="orderid" type="orderidtype" use="required"/>
+</xs:complexType>
+
+<xs:element name="shiporder" type="shipordertype"/>
+
+</xs:schema>
+
+
+
+
+
+
+
+
+
+

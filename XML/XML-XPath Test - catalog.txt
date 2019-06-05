@@ -1,0 +1,295 @@
+https://codebeautify.org/Xpath-Tester
+
+<root xmlns:foo="http://www.foo.org/" xmlns:bar="http://www.bar.org">
+	<employees>
+		<employee id="1">Johnny Dapp</employee>
+		<employee id="2">Al Pacino</employee>
+		<employee id="3">Robert De Niro</employee>
+		<employee id="4">Kevin Spacey</employee>
+		<employee id="5">Denzel Washington</employee>
+	</employees>
+	<foo:companies>
+		<foo:company id="6">Tata Consultancy Services</foo:company>
+		<foo:company id="7">Wipro</foo:company>
+		<foo:company id="8">Infosys</foo:company>
+		<foo:company id="9">Microsoft</foo:company>
+		<foo:company id="10">IBM</foo:company>
+		<foo:company id="11">Apple</foo:company>
+		<foo:company id="12">Oracle</foo:company>
+	</foo:companies>
+</root>
+
+XPATH TEST CASES
+1. Select the document node 
+    /
+2. Select the 'root' element 
+    /root
+3. Select all 'employee' elements that are direct children of the 'employees' element. 
+    root/employees/employee
+4. Select all 'company' elements regardless of their positions in the document. 
+    //foo:company
+5. Select the 'id' attributes of the 'company' elements regardless of their positions in the document. 
+    //foo:company/@id
+6. Select the textual value of first 'employee' element. 
+    //employee[1]/text()        --> Text = Johnny Dapp
+7. Select the last 'employee' element. 
+    //employee[last()]      --> <employee id="5">Denzel Washington</employee>
+8. Select the first and second 'employee' elements using their position. 
+    //employee[position() < 3]
+9. Select all 'employee' elements that have an 'id' attribute. 
+    //employee[@id]
+10. Select the 'employee' element with the 'id' attribute value of '3'. 
+    //employee[@id='3']     --> <employee id="3">Robert De Niro</employee>
+11. Select all 'employee' nodes with the 'id' attribute value lower or equal to '3'. 
+    //employee[@id<=3]
+12. Select all the children of the 'companies' node. 
+    /root/foo:companies/*
+13. Select all the elements in the document. 
+    //*
+14. Select all the 'employee' elements AND the 'company' elements. 
+    //employee|//foo:company
+15. Select the name of the first element in the document. 
+    name(//*[1])                --> root
+16. Select the numeric value of the 'id' attribute of the first 'employee' element. 
+    number(//employee[1]/@id)   --> 1.0
+    number(//employee[3]/@id)   --> 3.0
+    (//employee[1]/@id)         --> id="1"
+17. Select the string representation value of the 'id' attribute of the first 'employee' element. 
+    string(//employee[1]/@id)   --> 1
+18. Select the length of the first 'employee' element's textual value. 
+    string-length(//employee[1]/text()) --> 11.0
+19. Select the local name of the first 'company' element, i.e. without the namespace. 
+    local-name(//foo:company[1])    --> foo-company
+20. Select the number of 'company' elements. 
+    count(//foo:company)    --> 7.0
+21. Select the sum of the 'id' attributes of the 'company' elements. 
+    sum(//foo:company/@id)  --> 63.0
+
+
+/root/employees/employee[text()="Kevin Spacey"] --> <employee id="4">Kevin Spacey</employee>
+
+
+---
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog>
+  <cd>
+    <title>Empire Burlesque</title>
+    <artist>Bob Dylan</artist>
+    <country>USA</country>
+    <company>Columbia</company>
+    <price>10.90</price>
+    <year>1985</year>
+  </cd>
+  <cd>
+    <title>Hide your heart</title>
+    <artist>Bonnie Tyler</artist>
+    <country>UK</country>
+    <company>CBS Records</company>
+    <price>9.90</price>
+    <year>1988</year>
+  </cd>
+  <cd>
+    <title>Greatest Hits</title>
+    <artist>Dolly Parton</artist>
+    <country>USA</country>
+    <company>RCA</company>
+    <price>9.90</price>
+    <year>1982</year>
+  </cd>
+  <cd>
+    <title>Still got the blues</title>
+    <artist>Gary Moore</artist>
+    <country>UK</country>
+    <company>Virgin records</company>
+    <price>10.20</price>
+    <year>1990</year>
+  </cd>
+  <cd>
+    <title>Eros</title>
+    <artist>Eros Ramazzotti</artist>
+    <country>EU</country>
+    <company>BMG</company>
+    <price>9.90</price>
+    <year>1997</year>
+  </cd>
+  <cd>
+    <title>One night only</title>
+    <artist>Bee Gees</artist>
+    <country>UK</country>
+    <company>Polydor</company>
+    <price>10.90</price>
+    <year>1998</year>
+  </cd>
+  <cd>
+    <title>Sylvias Mother</title>
+    <artist>Dr.Hook</artist>
+    <country>UK</country>
+    <company>CBS</company>
+    <price>8.10</price>
+    <year>1973</year>
+  </cd>
+  <cd>
+    <title>Maggie May</title>
+    <artist>Rod Stewart</artist>
+    <country>UK</country>
+    <company>Pickwick</company>
+    <price>8.50</price>
+    <year>1990</year>
+  </cd>
+  <cd>
+    <title>Romanza</title>
+    <artist>Andrea Bocelli</artist>
+    <country>EU</country>
+    <company>Polydor</company>
+    <price>10.80</price>
+    <year>1996</year>
+  </cd>
+  <cd>
+    <title>When a man loves a woman</title>
+    <artist>Percy Sledge</artist>
+    <country>USA</country>
+    <company>Atlantic</company>
+    <price>8.70</price>
+    <year>1987</year>
+  </cd>
+  <cd>
+    <title>Black angel</title>
+    <artist>Savage Rose</artist>
+    <country>EU</country>
+    <company>Mega</company>
+    <price>10.90</price>
+    <year>1995</year>
+  </cd>
+  <cd>
+    <title>1999 Grammy Nominees</title>
+    <artist>Many</artist>
+    <country>USA</country>
+    <company>Grammy</company>
+    <price>10.20</price>
+    <year>1999</year>
+  </cd>
+  <cd>
+    <title>For the good times</title>
+    <artist>Kenny Rogers</artist>
+    <country>UK</country>
+    <company>Mucik Master</company>
+    <price>8.70</price>
+    <year>1995</year>
+  </cd>
+  <cd>
+    <title>Big Willie style</title>
+    <artist>Will Smith</artist>
+    <country>USA</country>
+    <company>Columbia</company>
+    <price>9.90</price>
+    <year>1997</year>
+  </cd>
+  <cd>
+    <title>Tupelo Honey</title>
+    <artist>Van Morrison</artist>
+    <country>UK</country>
+    <company>Polydor</company>
+    <price>8.20</price>
+    <year>1971</year>
+  </cd>
+  <cd>
+    <title>Soulsville</title>
+    <artist>Jorn Hoel</artist>
+    <country>Norway</country>
+    <company>WEA</company>
+    <price>7.90</price>
+    <year>1996</year>
+  </cd>
+  <cd>
+    <title>The very best of</title>
+    <artist>Cat Stevens</artist>
+    <country>UK</country>
+    <company>Island</company>
+    <price>8.90</price>
+    <year>1990</year>
+  </cd>
+  <cd>
+    <title>Stop</title>
+    <artist>Sam Brown</artist>
+    <country>UK</country>
+    <company>A and M</company>
+    <price>8.90</price>
+    <year>1988</year>
+  </cd>
+  <cd>
+    <title>Bridge of Spies</title>
+    <artist>T`Pau</artist>
+    <country>UK</country>
+    <company>Siren</company>
+    <price>7.90</price>
+    <year>1987</year>
+  </cd>
+  <cd>
+    <title>Private Dancer</title>
+    <artist>Tina Turner</artist>
+    <country>UK</country>
+    <company>Capitol</company>
+    <price>8.90</price>
+    <year>1983</year>
+  </cd>
+  <cd>
+    <title>Midt om natten</title>
+    <artist>Kim Larsen</artist>
+    <country>EU</country>
+    <company>Medley</company>
+    <price>7.80</price>
+    <year>1983</year>
+  </cd>
+  <cd>
+    <title>Pavarotti Gala Concert</title>
+    <artist>Luciano Pavarotti</artist>
+    <country>UK</country>
+    <company>DECCA</company>
+    <price>9.90</price>
+    <year>1991</year>
+  </cd>
+  <cd>
+    <title>The dock of the bay</title>
+    <artist>Otis Redding</artist>
+    <country>USA</country>
+    <company>Stax Records</company>
+    <price>7.90</price>
+    <year>1968</year>
+  </cd>
+  <cd>
+    <title>Picture book</title>
+    <artist>Simply Red</artist>
+    <country>EU</country>
+    <company>Elektra</company>
+    <price>7.20</price>
+    <year>1985</year>
+  </cd>
+  <cd>
+    <title>Red</title>
+    <artist>The Communards</artist>
+    <country>UK</country>
+    <company>London</company>
+    <price>7.80</price>
+    <year>1987</year>
+  </cd>
+  <cd>
+    <title>Unchain my heart</title>
+    <artist>Joe Cocker</artist>
+    <country>USA</country>
+    <company>EMI</company>
+    <price>8.20</price>
+    <year>1987</year>
+  </cd>
+</catalog>
+
+XPath: /catalog/cd[price>10.00]/price -- Filter at parent level and then list results
+Result: 
+<price>10.90</price>
+<price>10.20</price>
+<price>10.90</price>
+<price>10.80</price>
+<price>10.90</price>
+<price>10.20</price>
+---
+
+
