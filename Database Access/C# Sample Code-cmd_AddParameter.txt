@@ -86,6 +86,32 @@
     cmd.Parameters.RemoveAt(0);
     cmd.Parameters.RemoveAt("@company");
 
-
     cmd.ExecuteNonQuery();
+
+
+    //1. set database column name by parameter
+    enum DbColumns { logid, logdate, logassembly, logclassname, logmethodname, logdata, logsessionnos };
+    
+    query = " SELECT TOP " + display + " logID, logDate, logData, logSessionNo";
+    query += "  FROM dbo.LogTable ";
+    query += " WHERE CONVERT(VARCHAR, logDate, 120) >= @dateString ";
+    query += "   AND {0} LIKE @keyPattern ";
+    query += " ORDER BY logID " + order;
+
+    DbColumns colName = (DbColumns)Enum.Parse(typeof(DbColumns), dbFieldName);
+    cmd.CommandText = String.Format(query, colName);
+    cmd.Parameters.AddWithValue("@dateString", inputValue);
+    cmd.Parameters.Add("@keyString", SqlDbType.VarChar, 19).Value = inputValue;
+    cmd.Parameters.Add("@keyPattern", SqlDbType.VarChar).Value = "%" + inputPattern + "%";
+
+
+    //2. set database name by parameter
+    query = " SELECT TOP " + display + " logID, logDate, logData, logSessionNo";
+    query += "  FROM " + databaseName;
+    query += " WHERE CONVERT(VARCHAR, logDate, 120) >= @dateString ";
+    query += "   AND logdata LIKE @keyPattern ";
+    query += " ORDER BY logID " + order;
+
+    cmd.Parameters.AddWithValue("@dateString", CreationDate);
+    cmd.Parameters.Add("@keyPattern", SqlDbType.VarChar).Value = "%" + inputValue + "%";
 
