@@ -41,6 +41,33 @@
 			{
 				SaveToNotes(nodeStartReportComments);
 			}
+            
+            //dtsx - Search child node: descendant Search from current position
+            XmlDocument dtsx = new XmlDocument();
+            XmlNamespaceManager namespaces = new XmlNamespaceManager(dtsx.NameTable);
+            namespaces.AddNamespace("DTS", "www.microsoft.com/SqlServer/Dts");
+            dtsx.Load(dtsxPackage);
+
+            XmlNodeList xnList2 = dtsx.SelectNodes("//DTS:ConnectionManagers/DTS:ConnectionManager", namespaces);
+            for (int i = 0; i < xnList2.Count; i++)
+            {
+                XmlNode node = xnList2[i];
+                var v = new dtsConfig();
+                string CreationName = node.Attributes["DTS:CreationName"].Value;    //"OLEDB", "FLATFILE"
+                string ObjectName = node.Attributes["DTS:ObjectName"].Value;
+                XmlNode xnNode = node.SelectSingleNode(@".//DTS:ObjectData/DTS:ConnectionManager", namespaces); 
+                string ConnectionString = xnNode.Attributes["DTS:ConnectionString"].Value;
+
+                v.Path = CreationName;
+                v.Property = ObjectName;
+                v.Value = ConnectionString;
+
+                SX_Html += "<tr><td>" + v.Path + "</td>";
+                SX_Html += "<td>" + v.Property + "</td>";
+                SX_Html += "<td>" + v.Value + "</td></tr>";
+            }
+            SX_Html += "</table><br />";
+
 		}
 		catch (Exception ex)
 		{
