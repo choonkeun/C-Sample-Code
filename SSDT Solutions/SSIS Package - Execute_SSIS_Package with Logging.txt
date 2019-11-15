@@ -1,0 +1,79 @@
+#region Execute_SSIS_Package
+    public string Execute_SSIS_Package(string dtsxPackage, string dtsxConfig)
+    {
+        string results = string.Empty;
+        try
+        {
+            var eventListener = new CustomEventListener();
+            Microsoft.SqlServer.Dts.Runtime.Application app = new Application();
+            using (var package = app.LoadPackage(dtsxPackage, eventListener))
+            {
+                //When dtsConfig is loaded, it always used regardless 'DTS:EnableConfig' is true or false
+                //But security point of view, do not save password into dtsx package
+                package.ImportConfigurationFile(dtsxConfig);
+
+                //---Additional other variable setting
+                //variables[item.Key].Value = item.Value;
+
+                ConnectionManager connMgr = package.Connections.Add("FILE");
+                connMgr.Name = "ssisLogFile";
+                connMgr.ConnectionString = ssisLogFile;
+
+                //Text File Log Provider: DTS.LogProviderTextFile
+                //SQL Profiler Log Provider: DTS.LogProviderSQLProfiler.3
+                //SQL Server Log Provider: DTS.LogProviderSQLServer.3
+                //Windows Event Log Provider: DTS.LogProviderEventLog.3
+                //XML File Log Provider: DTS.LogProviderXMLFile.3
+
+                LogProvider provider = package.LogProviders.Add("DTS.LogProviderTextFile");
+                provider.ConfigString = "ssisLogFile";
+                package.LoggingOptions.SelectedLogProviders.Add(provider);
+                package.LoggingOptions.EventFilterKind = DTSEventFilterKind.Inclusion;
+                package.LoggingOptions.EventFilter = new String[] { "OnError", "OnWarning", "OnInformation", "OnPreExecute", "OnPostExecute" };
+                package.LoggingMode = DTSLoggingMode.Enabled;
+
+                provider.OpenLog();
+
+
+                try
+                {
+                    var execResult = package.Execute(null, package.Variables, eventListener, null, null);
+                    
+                    if (execResult == DTSExecResult.Failure || execResult == DTSExecResult.Canceled)
+                    {
+                        results = dtsxPackage + ": failed";
+                        Utility.Append_log( string.Format("{0}: execResult Break:{1}", DateTime.Now.ToString(format), execResult.ToString()) );
+                    }
+                    else
+                    {
+                        results = dtsxPackage + ": success";
+                        Utility.Append_log( string.Format("{0}: execResult:{1}", DateTime.Now.ToString(format), execResult.ToString()) );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Utility.Append_log( string.Format("{0}: execResult:{1}", DateTime.Now.ToString(format), ex.Message) );
+                    //MessageBox.Show(ex.Message);
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            results = dtsxPackage + ": Exception Error";
+            Utility.Append_log( string.Format("{0}: Exception:{1}", DateTime.Now.ToString(format), ex.Message.ToString()) );
+            //throw ex;
+        }
+        return results;
+    }
+
+    public class CustomEventListener : DefaultEvents
+    {
+        public override bool OnError(DtsObject source, int errorCode, string subComponent,
+            string description, string helpFile, int helpContext, string idofInterfaceWithError)
+        {
+            Console.WriteLine("Error in {0}/{1} : {2}", source, subComponent, description);
+            return false;
+        }
+    }
+#endregion
