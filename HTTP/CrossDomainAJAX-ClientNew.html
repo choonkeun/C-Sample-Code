@@ -1,0 +1,38 @@
+<html>
+<head>
+
+    <script type="text/javascript">
+        //https://www.youtube.com/watch?v=3AoeiQa8mY8
+    
+        var processResults = function (data)
+        {
+            console.log(data);
+        }
+        
+        window.onload = function() 
+        {
+            //callbackMethodName will be changed every time to avoid get the data from server cache
+            var randomNumber = Math.round(100000 * Math.random());
+            var callbackMethodName = "cb_" + randomNumber;
+            
+            window[callbackMethodName] = processResults;
+            
+            var script = document.createElement("script");
+            script.type = "text/javascript";
+            script.id = "script" + callbackMethodName;
+            script.src = "http://api.open-notify.org/astros.json?callback=" + callbackMethodName;
+            document.body.appendChild(script);
+            //document.getElementById(script.id).remove();
+        }
+
+    </script>
+
+</head>
+
+<body>
+    <div> JSONP DEMO V2.0</div>
+</body>
+
+</html>
+
+

@@ -1,0 +1,53 @@
+<html>
+<head>
+
+    <script>
+        //https://www.youtube.com/watch?v=3AoeiQa8mY8
+
+        var processResults = function (data)
+        {
+            console.log(data);
+        }
+
+    </script>
+
+    <script type="text/javascript" src="http://api.open-notify.org/astros.json?callback=processResults">
+    </script>     
+
+</head>
+
+<body>
+    <div> JSONP DEMO V1.0</div>
+    
+<pre>    
+http://api.open-notify.org/astros.json
+
+JSONP stands for JSON with Padding.
+JSONP is a method for sending JSON data without worrying about cross-domain issues.
+JSONP does not use the XMLHttpRequest object but use &LT;script&GT; tag.
+
+Requesting a file from another domain can cause problems, due to cross-domain policy.
+Requesting an external script from another domain does not have this problem.
+JSONP uses this advantage, and request files using the script tag instead of the XMLHttpRequest object.
+
+&LT;button onclick="clickButton()">Click me!&LT;/button&GT;
+&LT;p id="demo">&LT;/p&GT;
+
+&LT;script&GT;
+    function clickButton() {
+      var s = document.createElement("script");
+      s.src = "demo_jsonp2.php?callback=myDisplayFunction";
+      document.body.appendChild(s);
+    }
+
+    function myDisplayFunction(myObj) {
+      document.getElementById("demo").innerHTML = myObj.name;
+    }
+&LT;/script&GT;
+</pre>
+  
+</body>
+
+</html>
+
+
