@@ -1,0 +1,78 @@
+
+----------------------------------------------------------------------------------------------------
+Reading connection string from ADO.NET connection using Script Task
+----------------------------------------------------------------------------------------------------
+
+<?xml version="1.0"?>
+<DTSConfiguration>
+    <DTSConfigurationHeading>
+        <DTSConfigurationFileInfo GeneratedBy="" GeneratedFromPackageName="test_ConnectionString" GeneratedFromPackageID="{15516F96-AF71-467B-B4B0-5940CA600F2D}" GeneratedDate="1/31/2020 2:32:27 PM"/>
+    </DTSConfigurationHeading>
+    <Configuration ConfiguredType="Property" Path="\Package.Connections[ADONET_FL].Properties[ConnectionString]" ValueType="String">
+        <ConfiguredValue>Data Source=SERVERNAME;Initial Catalog=DATABASEBNAME;User ID=XXXXX;Password=XXXXX;Auto Translate=False;</ConfiguredValue>
+    </Configuration>
+    <Configuration ConfiguredType="Property" Path="\Package.Variables[User::SourceFolder].Properties[Value]" ValueType="String">
+      <ConfiguredValue>C:\</ConfiguredValue>
+    </Configuration>
+    <Configuration ConfiguredType="Property" Path="\Package.Variables[User::TargetFolder].Properties[Value]" ValueType="String">
+      <ConfiguredValue>C:\</ConfiguredValue>
+    </Configuration>
+</DTSConfiguration>
+
+----------------------------------------------------------------------------------------------------
+
+#region Namespaces
+using System;
+using System.Data;
+using Microsoft.SqlServer.Dts.Runtime;
+using System.Windows.Forms;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+#endregion
+
+namespace ST_1fb426598d994e5badbab2c07faa5bfa
+{
+	[Microsoft.SqlServer.Dts.Tasks.ScriptTask.SSISScriptTaskEntryPointAttribute]
+	public partial class ScriptMain : Microsoft.SqlServer.Dts.Tasks.ScriptTask.VSTARTScriptObjectModelBase
+	{
+
+		public void Main()
+		{
+            string PackageName = (String)Dts.Variables["System::PackageName"].Value;
+
+            string SourceFolder = Dts.Variables["User::SourceFolder"].Value.ToString();
+            string TargetFolder = Dts.Variables["User::TargetFolder"].Value.ToString();
+            string FileName = Dts.Variables["User::FileName"].Value.ToString();
+            string TargetFile = string.Empty;
+
+            try
+            {
+                //DO NOT USE: 'Provider=SQLNCLI11.1', 'Auto Translate=False'
+                SqlConnection sqlConn = (SqlConnection)(Dts.Connections["ADONET_FL"].AcquireConnection(Dts.Transaction) as SqlConnection);
+                adonetConnString = sqlConn.ConnectionString;
+                MessageBox.Show(adonetConnString);
+
+                using (var sqlCmd = new SqlCommand("select count(*) from dbo.Processes", sqlConn))
+                {
+                    sqlCmd.CommandType = CommandType.Text;
+                    //sqlCmd.Parameters.AddWithValue("@IdNum", newUser.id_num);
+                    //sqlCmd.Parameters.AddWithValue("@Username", newUser.username);
+                    //sqlCmd.Parameters.AddWithValue("@Email", newUser.email);
+
+                    //int rowsAffected = sqlCmd.ExecuteNonQuery();
+                    int val = (int)sqlCmd.ExecuteScalar();
+                    MessageBox.Show(val.ToString());        //print 941 
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Dts.TaskResult = (int)ScriptResults.Failure;
+                Dts.Events.FireError(0, "Package name: " + PackageName, ex.Message + "\r" + ex.StackTrace, String.Empty, 0);
+            }
+
+
+            Dts.TaskResult = (int)ScriptResults.Success;
+		}
+    }
+}
