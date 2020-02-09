@@ -1,0 +1,27 @@
+using System.Data.SqlClient;
+using System.Data.OleDb;
+
+public void Main()
+{
+    // TODO: Add your code here
+
+    string PackageName = (String)Dts.Variables["System::PackageName"].Value;
+
+    //string SourceFolder = Dts.Variables["User::SourceFolder"].Value.ToString();
+    //string TargetFolder = Dts.Variables["User::TargetFolder"].Value.ToString();
+    //var memberIdList = (string[])Dts.Variables["User::MemberId"].Value;     //not working
+
+    List<string> memberList = new List<string>();
+
+    DataTable dt = new DataTable();
+    OleDbDataAdapter adapter = new OleDbDataAdapter();
+    adapter.Fill(dt, Dts.Variables["User::MemberId"].Value);
+    foreach (DataRow row in dt.Rows)
+    {
+        memberList.Add((string)row[0]);
+    }
+    string[] memberListArray = memberList.ToArray();
+
+
+    Dts.TaskResult = (int)ScriptResults.Success;
+}
