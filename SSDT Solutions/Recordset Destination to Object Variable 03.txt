@@ -1,3 +1,8 @@
+
+// https://www.timmitchell.net/post/2013/05/28/using-the-ssis-object-variable-as-a-result-set-enumerator/
+// https://docs.microsoft.com/en-us/sql/integration-services/data-flow/use-a-recordset-destination?view=sql-server-ver15
+
+
 using System.Data.SqlClient;
 using System.Data.OleDb;
 
