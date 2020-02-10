@@ -1,0 +1,76 @@
+        public void Main()
+        {
+            // TODO: Add your code here
+
+            string PackageName = (String)Dts.Variables["System::PackageName"].Value;
+
+            //string SourceFolder = Dts.Variables["User::SourceFolder"].Value.ToString();
+            //string TargetFolder = Dts.Variables["User::TargetFolder"].Value.ToString();
+            //var memberIdList = (string[])Dts.Variables["User::MemberId"].Value;     //not working
+            string TargetFile = string.Empty;
+            List<string> memberList = new List<string>();
+
+            //------------------------------------------------------------------
+            //Recordset Destination to Object Variable & Access object in Script
+            //------------------------------------------------------------------
+            DataTable dt = new DataTable();
+            OleDbDataAdapter adapter = new OleDbDataAdapter();
+            adapter.Fill(dt, Dts.Variables["User::MemberId"].Value);
+            foreach (DataRow row in dt.Rows)
+            {
+                memberList.Add((string)row[0]);
+            }
+            string[] memberListArray = memberList.ToArray();
+
+
+
+            //---------------------------
+            //ADO.NET Recordset in Script
+            //---------------------------
+            
+            DataTable table = Get_DatabaseTable("HOST.ADO_NorthWind");
+            
+            foreach (DataRow row in table.Rows)
+            {
+                Debug.Print("--- Row ---");
+                foreach (var item in row.ItemArray)
+                {
+                    Debug.Print(item.ToString());
+                }
+            }
+
+            Dts.TaskResult = (int)ScriptResults.Success;
+        }
+
+        public DataTable Get_DatabaseTable(String sqlConnString)
+        {
+            DataTable dt = new DataTable();
+            string queryString = "SELECT DISTINCT [CustomerID] FROM[NorthWind].[dbo].[Customers]";
+
+            using ( SqlConnection sqlConn = (SqlConnection)(Dts.Connections[sqlConnString].AcquireConnection(Dts.Transaction) as SqlConnection) )
+            {
+                try
+                {
+                    using (var sqlCmd = new SqlCommand())
+                    {
+                        sqlCmd.Connection = sqlConn;
+                        sqlCmd.CommandType = CommandType.Text;
+                        sqlCmd.CommandText = queryString;
+                        //sqlCmd.Parameters.AddWithValue("@IdNum", newUser.id_num);
+                        SqlDataAdapter da = new SqlDataAdapter(sqlCmd);
+                        da.Fill(dt);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                    //MessageBox.Show(ex.Message);
+                }
+                finally
+                {
+                    sqlConn.Close();
+                }
+
+            }
+            return dt;
+        }
