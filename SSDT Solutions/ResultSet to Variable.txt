@@ -1,0 +1,67 @@
+
+    -------------------------------
+    ResultSet to Variable.dtsConfig
+    -------------------------------
+
+    <?xml version="1.0"?>
+    <DTSConfiguration>
+        <DTSConfigurationHeading>
+            <DTSConfigurationFileInfo GeneratedBy="john" GeneratedFromPackageName="ResultSet to Variable" 
+            GeneratedFromPackageID="{0E1A9146-F161-4877-A793-C404668914E1}" GeneratedDate="2/10/2020 1:59:56 PM"/>
+        </DTSConfigurationHeading>
+        <Configuration ConfiguredType="Property" Path="\Package.Connections[ADONET_HOST].Properties[ConnectionString]" ValueType="String">
+            <ConfiguredValue>Data Source=5490L8;User ID=user;Password=pass;Initial Catalog=Northwind;</ConfiguredValue> 
+         </Configuration>
+        <Configuration ConfiguredType="Property" Path="\Package.Connections[OLEDB_HOST].Properties[ConnectionString]" ValueType="String">
+            <ConfiguredValue>Data Source=5490L8;User ID=user;Password=pass;Initial Catalog=Northwind;Provider=SQLOLEDB.1;Auto Translate=False;</ConfiguredValue>
+        </Configuration>
+    </DTSConfiguration>  
+
+    *** Provider(Provider=SQLNCLI11.1) should not be used in connectionString ***
+
+    public void Main()
+    {
+        string PackageName = (String)Dts.Variables["System::PackageName"].Value;
+      //string SourceFolder = Dts.Variables["User::SourceFolder"].Value.ToString();
+
+        try
+        {
+            //---------------------------------------
+            //OLEDB_Connection ResultSet to Variable
+            //---------------------------------------
+            List<string> OLE_List = new List<string>();
+            DataTable dt = new DataTable();
+            OleDbDataAdapter ole_adapter = new OleDbDataAdapter();
+
+            ole_adapter.Fill(dt, Dts.Variables["User::OLE_Object"].Value);
+
+            foreach (DataRow row in dt.Rows)
+            {
+                OLE_List.Add((string)row[0]);
+            }
+            string[] OLE_Array = OLE_List.ToArray();
+
+            //---------------------------------------
+            //ADONET_Connection ResultSet to Variable
+            //---------------------------------------
+            List<string> ADO_List = new List<string>();
+            DataSet rs = (DataSet)Dts.Variables["User::ADO_Object"].Value;
+            DataTable adt = rs.Tables[0];
+
+            foreach (DataRow row in adt.Rows)
+            {
+                ADO_List.Add((string)row[0]);
+            }
+            string[] ADO_Array = ADO_List.ToArray();
+
+        }
+        catch (Exception ex)
+        {
+            Dts.TaskResult = (int)ScriptResults.Failure;
+            Dts.Events.FireError(0, "Package name: " + PackageName, ex.Message + "\r" + ex.StackTrace, String.Empty, 0);
+        }
+
+
+        Dts.TaskResult = (int)ScriptResults.Success;
+    }
+
