@@ -1,0 +1,219 @@
+
+using System;
+using System.Data;
+using Microsoft.SqlServer.Dts.Runtime;
+using System.Windows.Forms;
+
+using System.Linq;
+using System.IO;
+using System.Data.OleDb;
+using System.Globalization;
+
+namespace ST_b774df7ce652446790df8fe1af44d228
+{
+	[Microsoft.SqlServer.Dts.Tasks.ScriptTask.SSISScriptTaskEntryPointAttribute]
+
+	public partial class ScriptMain : Microsoft.SqlServer.Dts.Tasks.ScriptTask.VSTARTScriptObjectModelBase
+	{
+
+        public void Main()
+        {
+            bool fireAgain = true;
+            byte[] emptyBytes = new byte[0];
+            string PackageName = (String)Dts.Variables["System::PackageName"].Value;
+
+            string SourceFolder = Dts.Variables["User::SourceFolder"].Value.ToString();
+            string TargetFolder = Dts.Variables["User::TargetFolder"].Value.ToString();
+            string SheetName = Dts.Variables["User::SheetName"].Value.ToString();
+            string FileNamePattern = Dts.Variables["User::FileNamePattern"].Value.ToString();
+            string FileDelimited = Dts.Variables["User::Delimiter"].Value.ToString();
+
+            var files = Directory
+                    .GetFiles(SourceFolder, "*.*")
+                    .Where(file => file.ToLower().EndsWith(".xlsx") || file.ToLower().EndsWith(".xls"))
+                    .ToList();
+
+            string[] fileToken = FileNamePattern.Split('*');
+            string YYYYMM = DateTime.Now.ToString("yyyyMM");
+            string fileFullPath = "";
+            foreach (string file in files)
+            {
+                fileFullPath = file;
+                string filename = Path.GetFileName(file);
+                string filenameOnly = Path.GetFileNameWithoutExtension(filename);
+
+                //-filter filename
+                if (!(fileToken.Length > 0 && filename.StartsWith(fileToken[0])))   //startswith (not contains)
+                    continue;
+
+                //-Another way: Filter filename (ex: Excel_cupcake_202012.xlsx)
+                // string[] fileNameToken = filenameOnly.Split('_');
+                // string[] LOB = new string[] { "cupcake", "cake", "candy" };
+                // bool matchLOB = LOB.Contains(fileNameToken[1].ToLower());   //fileNameToken[1]="cupcake"
+                // if (!matchLOB)
+                // {
+                //     continue;
+                // }
+                // int myInt = 0;
+                // if (!(int.TryParse(fileNameToken[2], out myInt)))
+                // {
+                //     continue;
+                // }
+
+                try
+                {
+                    string ConStr;
+                    string HDR = "YES";
+                    ConStr = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + fileFullPath + ";Extended Properties=\"Excel 12.0;HDR=" + HDR + ";IMEX=0\"";
+                    OleDbConnection conn = new OleDbConnection(ConStr);
+
+                    conn.Open();
+                    DataTable dtSheet = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+                    int sheetcnt = 0;
+                    bool headline = true;
+                    Int32 rowsProcessed = 0;
+                    string xlSheetName = SheetName.ToLower() + "$";
+                    sheetcnt = dtSheet.Rows.Count;
+                    string str = string.Empty;
+
+                    foreach (DataRow drSheet in dtSheet.Rows)
+                    {
+                        string drSheetName = drSheet["TABLE_NAME"].ToString().ToLower();
+
+                        if (drSheetName == xlSheetName)
+                        {
+                            OleDbCommand oconn = new OleDbCommand("select * from [" + drSheetName + "]", conn);
+                            OleDbDataAdapter adp = new OleDbDataAdapter(oconn);
+                            DataTable dt = new DataTable();
+                            adp.Fill(dt);
+
+                            rowsProcessed = 0;
+                            StreamWriter sw = new StreamWriter(TargetFolder + "\\" + filenameOnly + "_" + SheetName + ".txt", true);
+                            int ColumnCount = dt.Columns.Count;
+
+                            headline = true;
+                            // 1st line is alway considered as head line, convert "." to "#"
+                            // if blank line is exist then the line will be ignored and 1st line that has a value will be header line
+                            if (headline)
+                            {
+                                // Write the Header Row to File
+                                // if columnName is blank then Excel Cell Name (A1, B1, ...) will be displayed
+                                for (int i = 0; i < ColumnCount; i++)
+                                {   
+                                    string columnName = dt.Columns[i].ColumnName;   
+                                    columnName = columnName.Replace("$", "").Replace("#", ".");      //float value: 123456#123450
+                                    DateTime DateValue;
+                                    var numericValue = 0;
+                                    double doubleValue = 0;
+                                    if (columnName.Length >= 6 && DateTime.TryParse(columnName, out DateValue))   //Date Conversion error: "12.23" -> Date
+                                    // if (DateTime.TryParseExact(columnName, "yyyy-MM-dd", CultureInfo.InvariantCulture,  DateTimeStyles.None, out DateValue))
+                                    {
+                                        DateTime headDateTime = DateTime.Parse(columnName);
+                                        str = headDateTime.ToString("yyyy-MM-dd HH:mm:ss");
+                                        sw.Write(str);
+                                    }
+                                    else if (int.TryParse(columnName, out numericValue))
+                                    {
+                                        sw.Write(Convert.ToString(columnName));              //32 bit signed integers
+                                    }
+                                    else if (double.TryParse(columnName, out doubleValue))
+                                    {
+                                        double ldouble = Convert.ToDouble(columnName);
+                                        str = ldouble.ToString("R");
+                                        sw.Write(str);
+                                    }
+                                    else
+                                        sw.Write(columnName);       //sw.Write(dt.Columns[i]);
+
+                                    if (i < ColumnCount - 1)
+                                    {
+                                        sw.Write(FileDelimited);
+                                    }
+                                }
+                                sw.Write(sw.NewLine);
+                            }
+
+                            // Data Line: from 2nd lines
+                            foreach (DataRow dr in dt.Rows)
+                            {
+                                if (!dr.IsNull(0))
+                                {
+                                    rowsProcessed++;
+                                    for (int i = 0; i < ColumnCount; i++)
+                                    {
+                                        if (!Convert.IsDBNull(dr[i]))
+                                        {
+                                            Type colTypeName = dr[i].GetType();
+                                            switch (colTypeName.Name.ToLower())
+                                            {
+                                                // https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-numeric-format-strings?redirectedfrom=MSDN
+                                                // https://www.tutorialsteacher.com/csharp/csharp-data-types
+                                                case "string":      //sequence of Unicode characters
+                                                    sw.Write(dr[i].ToString().Trim());
+                                                    break;
+                                                case "int":         //32 bit signed integers
+                                                    sw.Write(Convert.ToInt32(dr[i]).ToString());
+                                                    break;
+                                                case "long":        //64-bit signed integers
+                                                    sw.Write(Convert.ToInt64(dr[i]).ToString());
+                                                    break;
+                                                case "float":       //32-bit Single-precision floating point type
+                                                    double lfloat = Convert.ToDouble(dr[i]);
+                                                    str = lfloat.ToString("R"); 
+                                                    sw.Write(str);
+                                                    break;
+                                                case "double":      //64-bit double-precision floating point type
+                                                    double ldouble = Convert.ToDouble(dr[i]);
+                                                    str = ldouble.ToString("R");
+                                                    sw.Write(str);
+                                                    break;
+                                                case "decimal":     //128-bit decimal type for financial and monetary calculations
+                                                    decimal decimals = Convert.ToDecimal(dr[i]);
+                                                    string dec = decimals.ToString("G17");      // 17 digits
+                                                    sw.Write(dec);
+                                                    break;
+                                                case "datetime":
+                                                    sw.Write(Convert.ToDateTime(dr[i]).ToString("yyyy-MM-dd HH:mm:ss"));
+                                                    break;
+                                            }
+                                        }
+                                        if (i < ColumnCount - 1)
+                                        {
+                                            sw.Write(FileDelimited);
+                                        }
+                                    }
+                                    sw.Write(sw.NewLine);
+                                }
+                            }
+                            sw.Close();
+
+                            Dts.Log("Rows processed: " + rowsProcessed.ToString(), 0, emptyBytes);
+                            Dts.TaskResult = (int)ScriptResults.Success;
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    // fireAgain = false;
+                    // Dts.Events.FireInformation(3, "Package name:", PackageName, "", 0, ref fireAgain);
+
+                    Dts.Events.FireError(0, "Package name: " + PackageName, ex.Message + "\r" + ex.StackTrace, String.Empty, 0);
+                    Dts.TaskResult = (int)ScriptResults.Failure;
+                }
+
+            }
+
+            Dts.TaskResult = (int)ScriptResults.Success;
+
+        }
+
+        #region ScriptResults declaration
+        enum ScriptResults
+        {
+            Success = Microsoft.SqlServer.Dts.Runtime.DTSExecResult.Success,
+            Failure = Microsoft.SqlServer.Dts.Runtime.DTSExecResult.Failure
+        };
+        #endregion
+
+	}
