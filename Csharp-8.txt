@@ -1,0 +1,159 @@
+
+//https://www.codeproject.com/Articles/1265802/New-Features-of-Csharp-8
+
+//Default Literal
+    Func<int, string> whereClause = default;
+
+//Tuple Syntax
+    int count = 3;
+    string colors = "colors of the flag";
+    var tupleCol = (count,colors); // here syntax gets trimmed
+
+//Leading Underscore in Numeric Literals
+    int val_bi = 0b_0110_01;
+
+//Conditional 'ref'
+    ref var finalVal = ref (value1 != null ? ref val1_arr[0] : ref val2_arr[0]);
+
+//Named Arguments
+    EmpDetails(EmpID: 3, firstName: "Manavya", City: "Daswel");     //old
+    EmpDetails(EmpID: 3,            "Manavya", City: "Daswel");
+
+//stackalloc Operator
+    int*     Array1 = stackalloc int[3] {5, 6, 7};      //you will be able to initialize the values 
+    Span<int> Array = stackalloc    []  {5, 6, 7};
+
+//!= and = is Now Supported by Tuples
+    var exp1 = (val1: 100, val2: 20);
+    var exp2 = (val1: 100, val2: 20);
+    exp1 == exp2; //it will return displays as 'true'
+
+
+--What's New in C# 8
+
+//Using Declarations
+    var ReadFile(string szpath)
+    {
+        using StreamReader StrFile = new StreamReader(szpath);      //Declarations statement
+        string iCount;
+        string szLine;
+        while ((szLine = StrFile.ReadLine()) != null) 
+        { 
+            Console.WriteLine(szLine); 
+            iCount++; 
+        } 
+        // file is disposed here
+    }
+
+//Consuming Asynchronous Streams
+    public async System.Collections.Generic.IAsyncEnumerable<int> asyncStream()
+    {
+        for (int iCount = 0; iCount < 10; iCount++)
+        {
+            await Task.Delay(10);
+            yield return iCount;
+        }
+    }
+    //call above method in mail method
+    await foreach (var num in asyncStream())
+    {
+        Console.WriteLine(num);
+    }
+
+//Indices and Ranges
+    var simArray = new string[]
+    {                 
+        "one",         // 0      ^4: reverse index
+        "two",         // 1      ^3
+        "three",       // 2      ^2
+        "four",        // 3      ^1
+    };
+    Console.WriteLine("fetch using caret operator" + simArray[^1]);     //output as "four"
+    Console.WriteLine("fetch using range operator" + simArray[..]);     //output as "one" to "four"
+    Console.WriteLine("fetch using range operator" + simArray[..3]);    //output as "one" to "three"
+    Console.WriteLine("fetch using range operator" + simArray[2..]);    //output as "two" to "four"
+    
+    [..] indicates, fetch all items of list
+    [..3] indicates. fetch all items up to index 3
+    [1..] indicates, fetch all items starting from index 1  (index starts from 1)
+
+//stackalloc as an Expression
+    Span<int> num = stackalloc[] { 20, 30, 40 };
+    var index = num.IndexOfAny(stackalloc[] { 20 });
+    Console.WriteLine(index);  // output: 0
+
+//Enhancement in Interpolated String
+    Console.WriteLine($"Hello, {szName}! You have {iCount} apples");    //C#8, $@"" or @$"" are valid
+    
+//Make the Struct Member as Read-Only
+    public struct getSqure
+    {
+        public int InputA { get; set; }
+        public int InputB { get; set; }
+        public readonly int output => Math.Pow(A,B);
+        public override string ToString() => $"The answer is : {output} ";
+    }   
+
+//Local Static Functions
+    int Add()
+    {
+        int A = 5;
+        return Sum(A);
+        static int Sum(int val) => val + 3;
+    }
+
+//null-coalescing Operator
+    List<int> lstNum = null;
+    int? a = null;
+
+    ( lstNum ??= new List<int>() ).Add(100);
+    Console.WriteLine( string.Join(" ", lstNum) );  // the output would be : 100
+
+    lstNum.Add(a ??= 0);
+    Console.WriteLine(string.Join(" ", lstNum));  // output: 100 0
+
+//Switch Expression Changes
+
+    public enum RandomNum
+    {
+        One,
+        Three,
+        Five,
+        Seven,
+        Six,
+    }
+
+    //case      is replaced by =>
+    //default   is replaced by _
+    //switch    is used after variable
+
+    public static string getRandomNum(RandomNum iNum) 
+        =>  iNum switch             
+            {
+                RandomNum.One   => return "1",
+                RandomNum.Three => return "3",
+                RandomNum.Five  => return "5",
+                RandomNum.Seven => return "7",
+                RandomNum.Six   => return "6",
+                _               => throw new Exception("invalid number value"),
+            };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
