@@ -10,6 +10,41 @@ namespace ConsoleApp_for_CSharp7
     {
         static void Main(string[] args)
         {
+
+            ////Default Literal
+            //Func<int, string> whereClause = default;
+
+            ////Tuple Syntax
+            //int count = 3;
+            //string colors = "colors of the flag";
+            //var tupleCol = (count, colors); // here syntax gets trimmed
+
+            ////Leading Underscore in Numeric Literals
+            //int? value1 = 0b_0110_01;
+
+            ////Conditional 'ref'
+            //var val1_arr = new string[] { "a", "b" };
+            //ref var finalVal = ref (value1 != null ? ref val1_arr[0] : ref val1_arr[1]);
+
+            ////stackalloc Operator
+            //// Create a span over an array.   install System.Memory<T> 
+            //var array = new byte[100];
+            //var arraySpan = new Span<byte>(array);
+            //byte data = 0;
+            //for (int ctr = 0; ctr < arraySpan.Length; ctr++)
+            //    arraySpan[ctr] = data++;
+            //int arraySum = 0;
+            //foreach (var value in array)
+            //    arraySum += value;
+            //Console.WriteLine($"The sum is {arraySum}");
+            //// Output:  The sum is 4950
+
+            ////!= and = is Now Supported by Tuples
+            //var exp1 = (val1: 100, val2: 20);
+            //var exp2 = (val1: 100, val2: 20);
+            //bool results = exp1 == exp2 ? true : false;     //it will return displays as 'true'
+
+
             ////#1: bool = TryParse, Inline Variable
             //while (true)
             //{
@@ -109,12 +144,12 @@ namespace ConsoleApp_for_CSharp7
             //    Console.WriteLine($"moreNumbers is { moreNumbers[i] } ");
             //string wait = Console.ReadLine();
 
-            //#7: underscore
-            int a = 123_456_789;        //123456789
-            int b = 111______1;         //1111
-            var bin = 0b11_10_0100_11;  //915
-            Console.WriteLine($"a={ a }, b= { b }, bin = { bin }");
-            string wait = Console.ReadLine();
+            ////#7: underscore
+            //int a = 123_456_789;        //123456789
+            //int b = 111______1;         //1111
+            //var bin = 0b11_10_0100_11;  //915
+            //Console.WriteLine($"a={ a }, b= { b }, bin = { bin }");
+            //string wait = Console.ReadLine();
 
 
         }
